@@ -1,0 +1,133 @@
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { Eye, EyeOff } from 'lucide-react'
+import toast from 'react-hot-toast'
+
+const Login = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
+  const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const result = await login(formData.email, formData.password)
+      if (result.success) {
+        toast.success('Login successful!')
+        navigate('/')
+      } else {
+        toast.error(result.error || 'Login failed')
+      }
+    } catch (error) {
+      toast.error('An error occurred during login')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="animate-fade-in">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Login</h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">
+          Welcome back! Enter your email address and password
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label htmlFor="email" className="form-label">
+            Email ID
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            required
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="ginny@gmail.com"
+            className="form-input"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="form-label">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="form-input pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <input
+              id="remember"
+              name="remember"
+              type="checkbox"
+              className="w-4 h-4 text-secondary-600 border-gray-300 rounded focus:ring-secondary-500"
+            />
+            <label htmlFor="remember" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              Remember me
+            </label>
+          </div>
+
+          <Link
+            to="/auth/forgot-password"
+            className="text-sm text-secondary-600 hover:text-secondary-500"
+          >
+            Forgot Password?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full btn-primary"
+        >
+          {loading ? <div className="spinner"></div> : 'Log in'}
+        </button>
+
+        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          Don't have an account?{' '}
+          <Link to="/auth/register" className="text-secondary-600 hover:text-secondary-500">
+            Sign up
+          </Link>
+        </p>
+      </form>
+    </div>
+  )
+}
+
+export default Login

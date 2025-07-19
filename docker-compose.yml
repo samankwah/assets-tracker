@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  asset-tracker:
+    build: .
+    container_name: asset-tracker-app
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - asset-tracker-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Add a reverse proxy for SSL termination
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: asset-tracker-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - asset-tracker
+    networks:
+      - asset-tracker-network
+    restart: unless-stopped
+    profiles:
+      - proxy
+
+networks:
+  asset-tracker-network:
+    driver: bridge
+
+volumes:
+  ssl-certs:
+    driver: local
