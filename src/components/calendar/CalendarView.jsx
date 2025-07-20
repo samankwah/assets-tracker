@@ -3,58 +3,202 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Calendar as CalendarIcon,
-  Plus,
-  Filter,
-  Grid,
   List,
-  Clock,
-  AlertCircle,
-  CheckCircle,
   User,
-  Building
+  MapPin,
+  Table,
+  Plus
 } from 'lucide-react'
-import { useTaskStore } from '../../stores/taskStore'
-import { useAssetStore } from '../../stores/assetStore'
 import { useCalendarStore } from '../../stores/calendarStore'
-import { toast } from 'react-hot-toast'
 
 const CalendarView = ({ 
-  viewMode = 'month', 
-  onViewModeChange,
   selectedDate = new Date(),
   onDateChange,
   onEventClick,
-  onAddEvent,
-  showFilters = false
+  onAddEvent
 }) => {
-  const { tasks, getFilteredTasks, updateTask } = useTaskStore()
-  const { assets } = useAssetStore()
-  const { getCalendarEvents, updateEvent } = useCalendarStore()
+  const { getCalendarEvents } = useCalendarStore()
   
   const [currentDate, setCurrentDate] = useState(selectedDate)
-  const [draggedEvent, setDraggedEvent] = useState(null)
-  const [filterType, setFilterType] = useState('all')
-  const [filterAsset, setFilterAsset] = useState('')
-  const [draggedOverDate, setDraggedOverDate] = useState(null)
-  const [isDragging, setIsDragging] = useState(false)
-  const [showDragPreview, setShowDragPreview] = useState(false)
+  const [calendarView, setCalendarView] = useState('Calendar') // Calendar, Table, List
+  const [timeFilter, setTimeFilter] = useState('Due') // Due, Day, Week, Month
 
   useEffect(() => {
     setCurrentDate(selectedDate)
   }, [selectedDate])
 
-  const getEventsForDate = (date) => {
-    const allEvents = getCalendarEvents()
-    return allEvents.filter(event => {
+  // Update sidebar when calendar month changes
+  useEffect(() => {
+    // Force re-render of sidebar when currentDate or timeFilter changes
+    // This ensures the sidebar shows events for the currently displayed month
+  }, [currentDate, timeFilter])
+
+  // Get events filtered by current date and time filter
+  const getFilteredEventsByTime = () => {
+    const calendarEvents = getCalendarEvents()
+    
+    // Convert calendar events to the format expected by the sidebar
+    const formattedEvents = calendarEvents.map(event => {
       const eventDate = new Date(event.start)
-      return eventDate.toDateString() === date.toDateString()
-    }).filter(event => {
-      if (filterType === 'all') return true
-      return event.type === filterType || event.taskType === filterType
-    }).filter(event => {
-      if (!filterAsset) return true
-      return event.assetId?.toString() === filterAsset
+      return {
+        id: event.id,
+        title: event.title || event.description || 'Untitled Event',
+        date: eventDate.getDate(),
+        month: eventDate.getMonth(),
+        year: eventDate.getFullYear(),
+        status: event.status || 'Pending',
+        type: event.type || event.taskType || 'Task',
+        location: event.assetName || 'No location specified',
+        avatar: '/api/placeholder/32/32',
+        priority: event.priority,
+        assignedTo: event.assignedTo,
+        originalEvent: event,
+        fullDate: eventDate
+      }
     })
+
+    // Generate mock events for the current displayed month for demonstration
+    const generateMockEventsForMonth = (targetMonth, targetYear) => {
+      const mockEvents = []
+      const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate()
+      
+      // Generate sample events across the month
+      const sampleEvents = [
+        { day: 4, status: 'Pending', type: 'Inspection', title: 'Property inspection for building safety compliance', priority: 'High' },
+        { day: 8, status: 'Maintenance Overdue', type: 'Maintenance', title: 'Overdue maintenance work on HVAC system requires attention', priority: 'High' },
+        { day: 13, status: 'Pending', type: 'Maintenance', title: 'Routine maintenance check for electrical systems', priority: 'Medium' },
+        { day: 16, status: 'Maintenance Overdue', type: 'Maintenance', title: 'Plumbing maintenance work overdue - urgent repair needed', priority: 'High' },
+        { day: 18, status: 'Inspected', type: 'Inspection', title: 'Completed annual safety inspection with certificates', priority: 'Medium' },
+        { day: 22, status: 'Maintenance Overdue', type: 'Maintenance', title: 'Fire safety system maintenance overdue - schedule immediately', priority: 'High' },
+        { day: 27, status: 'Inspected', type: 'Inspection', title: 'Building structural inspection completed successfully', priority: 'Low' },
+        { day: 29, status: 'Pending', type: 'Inspection', title: 'Final inspection before tenant move-in process', priority: 'Medium' }
+      ]
+
+      sampleEvents.forEach(sample => {
+        if (sample.day <= daysInMonth) {
+          mockEvents.push({
+            id: `mock-${targetMonth}-${sample.day}`,
+            title: sample.title,
+            date: sample.day,
+            month: targetMonth,
+            year: targetYear,
+            status: sample.status,
+            type: sample.type,
+            priority: sample.priority,
+            location: 'Oxford Street, Lebanon',
+            avatar: '/api/placeholder/32/32',
+            fullDate: new Date(targetYear, targetMonth, sample.day)
+          })
+        }
+      })
+
+      return mockEvents
+    }
+
+    // If no real events exist, generate mock events for current month
+    let allEvents = formattedEvents
+    if (formattedEvents.length === 0) {
+      allEvents = generateMockEventsForMonth(currentDate.getMonth(), currentDate.getFullYear())
+    }
+
+    // Filter events based on time filter
+    let filteredEvents = allEvents
+
+    switch (timeFilter) {
+      case 'Due':
+        // Show overdue and due today/tomorrow
+        filteredEvents = allEvents.filter(event => {
+          const eventDate = event.fullDate
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+          const tomorrow = new Date(today)
+          tomorrow.setDate(tomorrow.getDate() + 1)
+          
+          return event.status === 'Maintenance Overdue' || 
+                 (eventDate >= today && eventDate <= tomorrow)
+        })
+        break
+        
+      case 'Day':
+        // Show events for current day
+        filteredEvents = allEvents.filter(event => {
+          const eventDate = event.fullDate
+          const today = new Date()
+          return eventDate.toDateString() === today.toDateString()
+        })
+        break
+        
+      case 'Week':
+        // Show events for current week
+        filteredEvents = allEvents.filter(event => {
+          const eventDate = event.fullDate
+          const today = new Date()
+          const weekStart = new Date(today)
+          weekStart.setDate(today.getDate() - today.getDay())
+          weekStart.setHours(0, 0, 0, 0)
+          const weekEnd = new Date(weekStart)
+          weekEnd.setDate(weekStart.getDate() + 6)
+          weekEnd.setHours(23, 59, 59, 999)
+          
+          return eventDate >= weekStart && eventDate <= weekEnd
+        })
+        break
+        
+      case 'Month':
+        // Show events for currently displayed month
+        filteredEvents = allEvents.filter(event => {
+          return event.month === currentDate.getMonth() && 
+                 event.year === currentDate.getFullYear()
+        })
+        break
+    }
+
+    // Sort events by date
+    return filteredEvents.sort((a, b) => a.fullDate - b.fullDate)
+  }
+
+  const getStatusColor = (status, priority = 'Medium') => {
+    // First check for status-based colors (matching the legend)
+    if (status === 'Completed' || status === 'Inspected') {
+      return 'bg-green-500' // Completed - Green
+    }
+    if (status === 'Overdue' || status === 'Maintenance Overdue') {
+      return 'bg-red-500' // Overdue - Red
+    }
+    
+    // Then use priority-based colors for pending/active tasks
+    switch (priority) {
+      case 'High':
+        return 'bg-amber-500' // High Priority - Amber
+      case 'Medium':
+        return 'bg-blue-500' // Medium Priority - Blue  
+      case 'Low':
+        return 'bg-gray-500' // Low Priority - Gray
+      default:
+        return 'bg-blue-500' // Default to Medium Priority
+    }
+  }
+
+  const getStatusBarColor = (status, priority = 'Medium') => {
+    // First check for status-based colors (matching the legend)
+    if (status === 'Completed' || status === 'Inspected') {
+      return 'border-l-green-500' // Completed - Green
+    }
+    if (status === 'Overdue' || status === 'Maintenance Overdue') {
+      return 'border-l-red-500' // Overdue - Red
+    }
+    
+    // Then use priority-based colors for pending/active tasks
+    switch (priority) {
+      case 'High':
+        return 'border-l-amber-500' // High Priority - Amber
+      case 'Medium':
+        return 'border-l-blue-500' // Medium Priority - Blue
+      case 'Low':
+        return 'border-l-gray-500' // Low Priority - Gray
+      default:
+        return 'border-l-blue-500' // Default to Medium Priority
+    }
   }
 
   const navigateMonth = (direction) => {
@@ -64,406 +208,204 @@ const CalendarView = ({
     onDateChange?.(newDate)
   }
 
-  const navigateWeek = (direction) => {
-    const newDate = new Date(currentDate)
-    newDate.setDate(currentDate.getDate() + (direction * 7))
-    setCurrentDate(newDate)
-    onDateChange?.(newDate)
-  }
-
-  const navigateDay = (direction) => {
-    const newDate = new Date(currentDate)
-    newDate.setDate(currentDate.getDate() + direction)
-    setCurrentDate(newDate)
-    onDateChange?.(newDate)
-  }
-
-  const getEventColor = (event) => {
-    // Use custom color if available
-    if (event.color) {
-      return `bg-[${event.color}]`
-    }
-    
-    if (event.status === 'Completed') return 'bg-green-500'
-    if (event.status === 'Overdue') return 'bg-red-500'
-    
-    // Different colors for different event types
-    if (event.type === 'Inspection') return 'bg-blue-600'
-    if (event.type === 'Maintenance') return 'bg-orange-500'
-    if (event.type === 'Meeting') return 'bg-purple-500'
-    if (event.type === 'Emergency') return 'bg-red-600'
-    
-    switch (event.priority) {
-      case 'High': return 'bg-red-600'
-      case 'Medium': return 'bg-yellow-500'
-      case 'Low': return 'bg-green-600'
-      default: return 'bg-blue-500'
-    }
-  }
-
-  const getEventIcon = (task) => {
-    if (task.status === 'Completed') return <CheckCircle className="w-3 h-3" />
-    if (task.status === 'Overdue') return <AlertCircle className="w-3 h-3" />
-    return <Clock className="w-3 h-3" />
-  }
-
-  const handleDragStart = (e, event) => {
-    setDraggedEvent(event)
-    setIsDragging(true)
-    setShowDragPreview(true)
-    e.dataTransfer.effectAllowed = 'move'
-    
-    // Create custom drag image
-    const dragImage = createDragPreview(event)
-    if (dragImage) {
-      e.dataTransfer.setDragImage(dragImage, 100, 20)
-    }
-    
-    // Store event data for cross-browser compatibility
-    e.dataTransfer.setData('text/plain', JSON.stringify({
-      id: event.id,
-      title: event.title,
-      type: event.type || event.taskType
-    }))
-  }
-
-  const handleDragOver = (e, targetDate) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    
-    if (targetDate) {
-      setDraggedOverDate(targetDate.toDateString())
-    }
-  }
-
-  const handleDragEnter = (e, targetDate) => {
-    e.preventDefault()
-    if (targetDate && draggedEvent) {
-      setDraggedOverDate(targetDate.toDateString())
-    }
-  }
-
-  const handleDragLeave = (e) => {
-    e.preventDefault()
-    // Only clear if we're leaving the calendar area
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      setDraggedOverDate(null)
-    }
-  }
-
-  const handleDrop = async (e, targetDate) => {
-    e.preventDefault()
-    setDraggedOverDate(null)
-    setIsDragging(false)
-    setShowDragPreview(false)
-    
-    if (!draggedEvent || !targetDate) {
-      setDraggedEvent(null)
-      return
-    }
-
-    try {
-      const originalDate = new Date(draggedEvent.start || draggedEvent.dueDate)
-      const newDate = new Date(targetDate)
-      
-      // Preserve time from original date
-      newDate.setHours(originalDate.getHours())
-      newDate.setMinutes(originalDate.getMinutes())
-      newDate.setSeconds(originalDate.getSeconds())
-      
-      // Calculate duration for events with end times
-      let newEndDate = null
-      if (draggedEvent.end) {
-        const duration = new Date(draggedEvent.end).getTime() - originalDate.getTime()
-        newEndDate = new Date(newDate.getTime() + duration)
-      }
-
-      // Update based on event type
-      if (draggedEvent.type === 'task' || draggedEvent.taskType) {
-        // Update task
-        await updateTask(draggedEvent.id, {
-          dueDate: newDate.toISOString(),
-          updatedAt: new Date().toISOString()
-        })
-        
-        toast.success(`Task "${draggedEvent.title}" moved to ${newDate.toLocaleDateString()}`)
-      } else {
-        // Update calendar event
-        const updates = {
-          start: newDate,
-          updatedAt: new Date().toISOString()
-        }
-        
-        if (newEndDate) {
-          updates.end = newEndDate
-        }
-        
-        updateEvent(draggedEvent.id, updates)
-        
-        toast.success(`Event "${draggedEvent.title}" moved to ${newDate.toLocaleDateString()}`)
-      }
-    } catch (error) {
-      console.error('Failed to move event:', error)
-      toast.error('Failed to move event')
-    }
-    
-    setDraggedEvent(null)
-  }
-
-  const createDragPreview = (event) => {
-    try {
-      const preview = document.createElement('div')
-      preview.className = 'bg-blue-600 text-white px-3 py-2 rounded-lg shadow-lg text-sm font-medium max-w-xs'
-      preview.style.position = 'absolute'
-      preview.style.top = '-1000px'
-      preview.style.pointerEvents = 'none'
-      preview.innerHTML = `
-        <div class="flex items-center space-x-2">
-          <div class="w-2 h-2 bg-white rounded-full"></div>
-          <span>${event.title}</span>
-        </div>
-      `
-      
-      document.body.appendChild(preview)
-      
-      // Remove after drag starts
-      setTimeout(() => {
-        if (document.body.contains(preview)) {
-          document.body.removeChild(preview)
-        }
-      }, 100)
-      
-      return preview
-    } catch (error) {
-      console.error('Failed to create drag preview:', error)
-      return null
-    }
-  }
-
-  const handleDragEnd = (e) => {
-    setIsDragging(false)
-    setDraggedEvent(null)
-    setDraggedOverDate(null)
-    setShowDragPreview(false)
-  }
-
-  const renderMonthView = () => {
-    const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
-    const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-    const startDate = new Date(firstDay)
-    startDate.setDate(startDate.getDate() - firstDay.getDay())
-    
-    const days = []
-    const currentDateForLoop = new Date(startDate)
-    
-    for (let i = 0; i < 42; i++) {
-      const date = new Date(currentDateForLoop)
-      const events = getEventsForDate(date)
-      const isCurrentMonth = date.getMonth() === currentDate.getMonth()
-      const isToday = date.toDateString() === new Date().toDateString()
-      
-      days.push(
-        <div
-          key={i}
-          className={`min-h-[120px] p-2 border border-gray-200 dark:border-gray-700 transition-all ${
-            isCurrentMonth 
-              ? 'bg-white dark:bg-gray-800' 
-              : 'bg-gray-50 dark:bg-gray-900'
-          } ${isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${
-            draggedOverDate === date.toDateString() 
-              ? 'bg-blue-100 dark:bg-blue-800/30 border-blue-400 dark:border-blue-500' 
-              : ''
-          }`}
-          onDragOver={(e) => handleDragOver(e, date)}
-          onDragEnter={(e) => handleDragEnter(e, date)}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, date)}
-        >
-          <div className={`text-sm font-medium mb-2 ${
-            isCurrentMonth 
-              ? 'text-gray-900 dark:text-white' 
-              : 'text-gray-400 dark:text-gray-600'
-          } ${isToday ? 'text-blue-600 dark:text-blue-400' : ''}`}>
-            {date.getDate()}
-          </div>
-          <div className="space-y-1">
-            {events.slice(0, 3).map((event) => (
-              <div
-                key={event.id}
-                className={`${getEventColor(event)} text-white text-xs p-1 rounded cursor-pointer flex items-center space-x-1 hover:opacity-80 transition-opacity ${
-                  draggedEvent?.id === event.id ? 'opacity-50 transform scale-95' : ''
-                }`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, event)}
-                onDragEnd={handleDragEnd}
-                onClick={() => onEventClick?.(event)}
-              >
-                {getEventIcon(event)}
-                <span className="truncate">{event.title}</span>
-              </div>
-            ))}
-            {events.length > 3 && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 pl-1">
-                +{events.length - 3} more
-              </div>
-            )}
-          </div>
-        </div>
-      )
-      
-      currentDateForLoop.setDate(currentDateForLoop.getDate() + 1)
-    }
-
+  const renderTopNavigation = () => {
     return (
-      <div className="grid grid-cols-7 gap-0 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        {/* Day headers */}
-        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-          <div key={day} className="bg-gray-100 dark:bg-gray-700 p-3 text-center text-sm font-medium text-gray-900 dark:text-white">
-            {day}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="flex items-center justify-between">
+          {/* Left side - View tabs */}
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setCalendarView('Calendar')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                calendarView === 'Calendar'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <CalendarIcon className="w-4 h-4" />
+              <span>Calendar</span>
+            </button>
+            <button
+              onClick={() => setCalendarView('Table')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                calendarView === 'Table'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <Table className="w-4 h-4" />
+              <span>Table</span>
+            </button>
+            <button
+              onClick={() => setCalendarView('List')}
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                calendarView === 'List'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <List className="w-4 h-4" />
+              <span>List</span>
+            </button>
           </div>
-        ))}
-        {days}
-      </div>
-    )
-  }
 
-  const renderWeekView = () => {
-    const weekStart = new Date(currentDate)
-    weekStart.setDate(currentDate.getDate() - currentDate.getDay())
-    
-    const days = []
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(weekStart)
-      date.setDate(weekStart.getDate() + i)
-      
-      const events = getEventsForDate(date)
-      const isToday = date.toDateString() === new Date().toDateString()
-      
-      days.push(
-        <div key={i} className="flex-1 min-h-[400px] border-r border-gray-200 dark:border-gray-700 last:border-r-0">
-          <div className={`p-3 text-center border-b border-gray-200 dark:border-gray-700 ${
-            isToday ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800'
-          }`}>
-            <div className="text-sm font-medium text-gray-900 dark:text-white">
-              {date.toLocaleDateString('en-US', { weekday: 'short' })}
-            </div>
-            <div className={`text-lg font-bold ${
-              isToday ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-white'
-            }`}>
-              {date.getDate()}
-            </div>
-          </div>
-          <div 
-            className={`p-2 space-y-1 transition-all ${
-              draggedOverDate === date.toDateString() 
-                ? 'bg-blue-50 dark:bg-blue-800/20' 
-                : ''
-            }`}
-            onDragOver={(e) => handleDragOver(e, date)}
-            onDragEnter={(e) => handleDragEnter(e, date)}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, date)}
-          >
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className={`${getEventColor(event)} text-white text-xs p-2 rounded cursor-pointer flex items-center space-x-2 hover:opacity-80 transition-opacity ${
-                  draggedEvent?.id === event.id ? 'opacity-50 transform scale-95' : ''
-                }`}
-                draggable
-                onDragStart={(e) => handleDragStart(e, event)}
-                onDragEnd={handleDragEnd}
-                onClick={() => onEventClick?.(event)}
-              >
-                {getEventIcon(event)}
-                <div className="flex-1 truncate">
-                  <div className="font-medium">{event.title}</div>
-                  <div className="text-xs opacity-75">{event.time}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className="flex">
-          {days}
-        </div>
-      </div>
-    )
-  }
-
-  const renderDayView = () => {
-    const events = getEventsForDate(currentDate)
-    const isToday = currentDate.toDateString() === new Date().toDateString()
-    
-    return (
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-        <div className={`p-4 border-b border-gray-200 dark:border-gray-700 ${
-          isToday ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800'
-        }`}>
-          <div className="text-lg font-bold text-gray-900 dark:text-white">
-            {currentDate.toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </div>
-        </div>
-        <div className="p-4">
-          {events.length > 0 ? (
-            <div className="space-y-3">
-              {events.map((event) => (
-                <div
-                  key={event.id}
-                  className={`${getEventColor(event)} text-white p-4 rounded-lg cursor-pointer hover:opacity-90 transition-opacity`}
-                  onClick={() => onEventClick?.(event)}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        {getEventIcon(event)}
-                        <h3 className="font-medium text-lg">{event.title}</h3>
-                      </div>
-                      <p className="text-sm opacity-90 mb-2">{event.description}</p>
-                      <div className="flex items-center space-x-4 text-sm opacity-75">
-                        <div className="flex items-center space-x-1">
-                          <Clock className="w-3 h-3" />
-                          <span>{event.time}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <Building className="w-3 h-3" />
-                          <span>{event.assetName}</span>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <User className="w-3 h-3" />
-                          <span>{event.assignedTo}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="ml-4">
-                      <span className="text-xs px-2 py-1 bg-white bg-opacity-20 rounded">
-                        {event.type}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">No events scheduled for this day</p>
+          {/* Right side - Time filters and Add Event */}
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setTimeFilter('Due')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                timeFilter === 'Due'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Due
+            </button>
+            <button
+              onClick={() => setTimeFilter('Day')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                timeFilter === 'Day'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Day
+            </button>
+            <button
+              onClick={() => setTimeFilter('Week')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                timeFilter === 'Week'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Week
+            </button>
+            <button
+              onClick={() => setTimeFilter('Month')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                timeFilter === 'Month'
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              Month
+            </button>
+            
+            {/* Add Event Button */}
+            <div className="ml-4 pl-4 border-l border-gray-200 dark:border-gray-600">
               <button
                 onClick={() => onAddEvent?.(currentDate)}
-                className="mt-4 btn-primary"
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Event
+                <Plus className="w-4 h-4" />
+                <span>Add Event</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderSidebar = () => {
+    const events = getFilteredEventsByTime()
+
+    const getSidebarTitle = () => {
+      switch (timeFilter) {
+        case 'Due':
+          return 'Due & Overdue Tasks'
+        case 'Day':
+          return 'Today\'s Tasks'
+        case 'Week':
+          return 'This Week\'s Tasks'
+        case 'Month':
+          return `${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })} Tasks`
+        default:
+          return 'Tasks'
+      }
+    }
+
+    return (
+      <div className="w-80 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Sidebar Header */}
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                {getSidebarTitle()}
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {events.length} {events.length === 1 ? 'task' : 'tasks'} found
+              </p>
+            </div>
+            <button
+              onClick={() => onAddEvent?.(currentDate)}
+              className="flex items-center justify-center w-8 h-8 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+              title="Add Event"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        <div className="h-full overflow-y-auto">
+          {events.length > 0 ? events.map((event) => (
+            <div
+              key={event.id}
+              className={`p-4 border-l-4 ${getStatusBarColor(event.status, event.priority)} border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors`}
+              onClick={() => onEventClick?.(event)}
+            >
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0">
+                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {String(event.date).padStart(2, '0')}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 uppercase">
+                    {new Date(event.year, event.month, event.date).toLocaleDateString('en-US', { month: 'short' })}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {event.year}
+                  </div>
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className={`inline-block px-2 py-1 text-xs font-medium text-white rounded ${getStatusColor(event.status, event.priority)}`}>
+                      {event.status}
+                    </span>
+                  </div>
+                  
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 line-clamp-2">
+                    {event.title}
+                  </p>
+                  
+                  <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
+                    <MapPin className="w-3 h-3" />
+                    <span>{event.location}</span>
+                  </div>
+                </div>
+
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                    <User className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div className="p-6 text-center">
+              <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-2">No tasks found</p>
+              <p className="text-xs text-gray-400 mb-4">
+                Try selecting a different time filter
+              </p>
+              <button
+                onClick={() => onAddEvent?.(currentDate)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors mx-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Event</span>
               </button>
             </div>
           )}
@@ -472,168 +414,307 @@ const CalendarView = ({
     )
   }
 
-  const getNavigationLabel = () => {
-    switch (viewMode) {
-      case 'month':
-        return currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
-      case 'week':
-        const weekStart = new Date(currentDate)
-        weekStart.setDate(currentDate.getDate() - currentDate.getDay())
-        const weekEnd = new Date(weekStart)
-        weekEnd.setDate(weekStart.getDate() + 6)
-        return `${weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-      case 'day':
-        return currentDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-      default:
-        return ''
+  const renderCalendarGrid = () => {
+    // Use current date for dynamic calendar navigation
+    const displayDate = currentDate
+    const firstDay = new Date(displayDate.getFullYear(), displayDate.getMonth(), 1)
+    const startDate = new Date(firstDay)
+    startDate.setDate(startDate.getDate() - firstDay.getDay())
+    
+    const days = []
+    const currentDateForLoop = new Date(startDate)
+    const events = getFilteredEventsByTime()
+    
+    for (let i = 0; i < 42; i++) {
+      const date = new Date(currentDateForLoop)
+      const dayEvents = events.filter(event => 
+        event.date === date.getDate() && 
+        event.month === date.getMonth() && 
+        event.year === date.getFullYear()
+      )
+      const isCurrentMonth = date.getMonth() === displayDate.getMonth()
+      const isToday = date.toDateString() === new Date().toDateString()
+      
+      days.push(
+        <div
+          key={i}
+          className={`min-h-[120px] p-2 border-r border-b border-gray-200 dark:border-gray-700 transition-all cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+            isCurrentMonth 
+              ? 'bg-white dark:bg-gray-800' 
+              : 'bg-gray-50 dark:bg-gray-900'
+          } ${isToday ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+          onClick={() => onDateChange?.(date)}
+          onDoubleClick={() => onAddEvent?.(date)}
+          title="Double-click to add event"
+        >
+          <div className={`text-sm font-medium mb-2 ${
+            isCurrentMonth 
+              ? 'text-gray-900 dark:text-white' 
+              : 'text-gray-400 dark:text-gray-600'
+          } ${isToday ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+            {date.getDate()}
+          </div>
+          
+          <div className="space-y-1">
+            {dayEvents.map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center space-x-1 cursor-pointer hover:opacity-80"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEventClick?.(event.originalEvent || event)
+                }}
+              >
+                <div className={`w-1 h-4 ${getStatusColor(event.status, event.priority)} rounded-full flex-shrink-0`}></div>
+                <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                  <User className="w-3 h-3 text-gray-600 dark:text-gray-400" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+      
+      currentDateForLoop.setDate(currentDateForLoop.getDate() + 1)
     }
+
+    return (
+      <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Calendar Header */}
+        <div className="bg-blue-500 text-white p-4 flex items-center justify-between">
+          <button
+            onClick={() => navigateMonth(-1)}
+            className="p-1 hover:bg-blue-600 rounded transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          
+          <h2 className="text-xl font-bold">
+            {displayDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
+          </h2>
+          
+          <button
+            onClick={() => navigateMonth(1)}
+            className="p-1 hover:bg-blue-600 rounded transition-colors"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="grid grid-cols-7">
+          {/* Day headers */}
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+            <div key={day} className="bg-gray-100 dark:bg-gray-700 p-3 text-center text-sm font-medium text-gray-900 dark:text-white border-r border-b border-gray-200 dark:border-gray-600 last:border-r-0">
+              {day}
+            </div>
+          ))}
+          {days}
+        </div>
+      </div>
+    )
   }
 
-  const navigate = (direction) => {
-    switch (viewMode) {
-      case 'month':
-        navigateMonth(direction)
-        break
-      case 'week':
-        navigateWeek(direction)
-        break
-      case 'day':
-        navigateDay(direction)
-        break
+  const renderTableView = () => {
+    const events = getFilteredEventsByTime()
+
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              Tasks Table - {timeFilter} View
+            </h3>
+          </div>
+          <button
+            onClick={() => onAddEvent?.(currentDate)}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Event</span>
+          </button>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Title</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              {events.map((event) => (
+                <tr key={event.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    <div className="flex flex-col">
+                      <span className="font-medium">{String(event.date).padStart(2, '0')}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(event.year, event.month, event.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(event.status, event.priority)} text-white`}>
+                      {event.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                    {event.type}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 dark:text-white max-w-xs">
+                    <div className="line-clamp-2">{event.title}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <div className="flex items-center">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      {event.location}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <button
+                      onClick={() => onEventClick?.(event.originalEvent || event)}
+                      className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {events.length === 0 && (
+            <div className="text-center py-12">
+              <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No events found for the selected time period</p>
+              <button
+                onClick={() => onAddEvent?.(currentDate)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors mx-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Event</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const renderListView = () => {
+    const events = getFilteredEventsByTime()
+
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              Tasks List - {timeFilter} View
+            </h3>
+          </div>
+          <button
+            onClick={() => onAddEvent?.(currentDate)}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Event</span>
+          </button>
+        </div>
+        
+        <div className="divide-y divide-gray-200 dark:divide-gray-700">
+          {events.map((event) => (
+            <div
+              key={event.id}
+              className={`p-6 border-l-4 ${getStatusBarColor(event.status, event.priority)} hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors`}
+              onClick={() => onEventClick?.(event.originalEvent || event)}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {String(event.date).padStart(2, '0')}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 uppercase text-center">
+                      {new Date(event.year, event.month, event.date).toLocaleDateString('en-US', { month: 'short' })}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                      {event.year}
+                    </div>
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className={`inline-block px-3 py-1 text-xs font-medium text-white rounded-full ${getStatusColor(event.status, event.priority)}`}>
+                        {event.status}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {event.type}
+                      </span>
+                    </div>
+                    
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                      {event.title}
+                    </h4>
+                    
+                    <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
+                      <MapPin className="w-4 h-4" />
+                      <span>{event.location}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          {events.length === 0 && (
+            <div className="text-center py-12">
+              <CalendarIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-2">No events found for the selected time period</p>
+              <p className="text-sm text-gray-400 mb-4">Try selecting a different time filter or add new events</p>
+              <button
+                onClick={() => onAddEvent?.(currentDate)}
+                className="flex items-center space-x-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors mx-auto"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Event</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  const renderMainContent = () => {
+    if (calendarView === 'Calendar') {
+      return (
+        <div className="flex space-x-6">
+          {renderSidebar()}
+          {renderCalendarGrid()}
+        </div>
+      )
+    } else if (calendarView === 'Table') {
+      return renderTableView()
+    } else {
+      return renderListView()
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Calendar Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-            {getNavigationLabel()}
-          </h2>
-          <button
-            onClick={() => navigate(1)}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-          <button
-            onClick={() => {
-              const today = new Date()
-              setCurrentDate(today)
-              onDateChange?.(today)
-            }}
-            className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Today
-          </button>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          {/* View Mode Buttons */}
-          <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-            <button
-              onClick={() => onViewModeChange?.('month')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                viewMode === 'month'
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Month
-            </button>
-            <button
-              onClick={() => onViewModeChange?.('week')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                viewMode === 'week'
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Week
-            </button>
-            <button
-              onClick={() => onViewModeChange?.('day')}
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                viewMode === 'day'
-                  ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              Day
-            </button>
-          </div>
-
-          <button
-            onClick={() => onAddEvent?.(currentDate)}
-            className="btn-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Event
-          </button>
-        </div>
-      </div>
-
-      {/* Filters */}
-      {showFilters && (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">Filters:</span>
-            </div>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">All Types</option>
-              <option value="Inspection">Inspection</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Safety Check">Safety Check</option>
-              <option value="Cleaning">Cleaning</option>
-              <option value="Meeting">Meeting</option>
-              <option value="Emergency">Emergency</option>
-            </select>
-            <select
-              value={filterAsset}
-              onChange={(e) => setFilterAsset(e.target.value)}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="">All Assets</option>
-              {assets.map((asset) => (
-                <option key={asset.id} value={asset.id}>
-                  {asset.name}
-                </option>
-              ))}
-            </select>
-            {(filterType !== 'all' || filterAsset) && (
-              <button
-                onClick={() => {
-                  setFilterType('all')
-                  setFilterAsset('')
-                }}
-                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Calendar Content */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg">
-        {viewMode === 'month' && renderMonthView()}
-        {viewMode === 'week' && renderWeekView()}
-        {viewMode === 'day' && renderDayView()}
-      </div>
+      {renderTopNavigation()}
+      {renderMainContent()}
     </div>
   )
 }

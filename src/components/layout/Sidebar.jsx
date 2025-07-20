@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
-import { useTheme } from '../../context/ThemeContext'
+import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import {
   Home,
   Building,
@@ -11,29 +11,29 @@ import {
   Moon,
   Sun,
   LogOut,
-  Settings
-} from 'lucide-react'
+  Settings,
+} from "lucide-react";
 
 const Sidebar = () => {
-  const { logout } = useAuth()
-  const { theme, toggleTheme } = useTheme()
+  const { logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: Home },
-    { name: 'Assets', href: '/assets', icon: Building },
-    { name: 'Tasks', href: '/tasks', icon: CheckSquare },
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
-  ]
+    { name: "Dashboard", href: "/", icon: Home },
+    { name: "Assets", href: "/assets", icon: Building },
+    { name: "Tasks", href: "/tasks", icon: CheckSquare },
+    { name: "Calendar", href: "/calendar", icon: Calendar },
+  ];
 
-  const preferences = [
-    { name: 'Help Center', icon: HelpCircle },
-  ]
+  const preferences = [{ name: "Help Center", icon: HelpCircle }];
 
   return (
-    <div className="flex flex-col w-64 bg-gray-50 dark:bg-gray-900 h-screen">
+    <div className="flex flex-col w-64 bg-gray-100 dark:bg-gray-800 h-screen">
       {/* Logo */}
       <div className="flex items-center justify-center h-16 px-4">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Assets Hub</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">
+          Assets Hub
+        </h1>
       </div>
 
       {/* Navigation */}
@@ -48,9 +48,9 @@ const Sidebar = () => {
                 key={item.name}
                 to={item.href}
                 className={({ isActive }) =>
-                  isActive 
-                    ? 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900'
-                    : 'flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors'
+                  isActive
+                    ? "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900"
+                    : "flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors"
                 }
               >
                 <item.icon className="w-5 h-5 mr-3" />
@@ -60,14 +60,13 @@ const Sidebar = () => {
           </div>
         </div>
 
-
         <div className="mb-8">
           <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">
             PREFERENCES
           </h3>
           <div className="space-y-2">
             {preferences.map((item) => (
-              <button 
+              <button
                 key={item.name}
                 className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
               >
@@ -81,15 +80,23 @@ const Sidebar = () => {
               onClick={toggleTheme}
               className="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
             >
-              {theme === 'light' ? (
+              {theme === "light" ? (
                 <Moon className="w-5 h-5 mr-3" />
               ) : (
                 <Sun className="w-5 h-5 mr-3" />
               )}
               Dark Mode
               <div className="ml-auto">
-                <div className={`w-8 h-4 rounded-full ${theme === 'dark' ? 'bg-blue-500' : 'bg-gray-300'} relative transition-colors`}>
-                  <div className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${theme === 'dark' ? 'translate-x-4' : 'translate-x-0.5'}`}></div>
+                <div
+                  className={`w-8 h-4 rounded-full ${
+                    theme === "dark" ? "bg-blue-500" : "bg-gray-300"
+                  } relative transition-colors`}
+                >
+                  <div
+                    className={`w-3 h-3 rounded-full bg-white absolute top-0.5 transition-transform ${
+                      theme === "dark" ? "translate-x-4" : "translate-x-0.5"
+                    }`}
+                  ></div>
                 </div>
               </div>
             </button>
@@ -108,7 +115,7 @@ const Sidebar = () => {
         </button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Sidebar
+export default Sidebar;

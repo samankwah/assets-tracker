@@ -12,16 +12,12 @@ const Calendar = () => {
   usePageTitle('Calendar')
   
   const { 
-    currentDate, 
     viewMode, 
     setCurrentDate, 
-    setViewMode, 
-    navigateToToday, 
-    navigateToNext, 
-    navigateToPrevious 
+    setViewMode
   } = useCalendarStore()
   
-  const { completeTask, deleteTask } = useTaskStore()
+  const { deleteTask } = useTaskStore()
   
   const [selectedEvent, setSelectedEvent] = useState(null)
   const [showEventModal, setShowEventModal] = useState(false)
@@ -96,7 +92,7 @@ const Calendar = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 text-sm">
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-green-500 rounded"></div>
-            <span className="text-gray-600 dark:text-gray-400">Completed</span>
+            <span className="text-gray-600 dark:text-gray-400">Completed/Inspected</span>
           </div>
           <div className="flex items-center space-x-2">
             <div className="w-3 h-3 bg-red-500 rounded"></div>
@@ -115,6 +111,11 @@ const Calendar = () => {
             <span className="text-gray-600 dark:text-gray-400">Low Priority</span>
           </div>
         </div>
+        <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            <strong>Priority:</strong> Colors are assigned based on task status first (completed/overdue), then by priority level for active tasks.
+          </p>
+        </div>
       </div>
 
       {/* Navigation Help */}
@@ -124,9 +125,11 @@ const Calendar = () => {
         </h3>
         <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
           <li>• Click on any date to switch to day view</li>
+          <li>• Double-click on any date to create a new event</li>
           <li>• Click on events to view details and manage tasks</li>
-          <li>• Use the view buttons to switch between month, week, and day views</li>
-          <li>• Click "Today" to quickly navigate to the current date</li>
+          <li>• Use the time filter buttons (Due/Day/Week/Month) to filter tasks</li>
+          <li>• Switch between Calendar, Table, and List views using the top tabs</li>
+          <li>• Use &quot;Add Event&quot; buttons to create new tasks and events</li>
         </ul>
       </div>
 

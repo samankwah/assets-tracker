@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Assets from "./pages/Assets";
 import Tasks from "./pages/Tasks";
+import AddTask from "./pages/AddTask";
 import Calendar from "./pages/Calendar";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
@@ -42,6 +43,7 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="assets" element={<Assets />} />
                 <Route path="tasks" element={<Tasks />} />
+                <Route path="tasks/add" element={<AddTask />} />
                 <Route path="calendar" element={<Calendar />} />
                 <Route path="profile" element={<Profile />} />
                 <Route path="settings" element={<Settings />} />
