@@ -1,50 +1,16 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { useAssetStore } from '../stores/assetStore'
-import { useTaskStore } from '../stores/taskStore'
-import { usePhaseStore } from '../stores/phaseStore'
 import { useGlobalSearch } from '../hooks/useGlobalSearch'
 import usePageTitle from '../hooks/usePageTitle'
-import { Plus, Eye, MoreHorizontal, Calendar, Home, Building, CheckSquare, AlertCircle, Search, TrendingUp, BarChart3, AlertTriangle } from 'lucide-react'
+import { Plus, MoreHorizontal, Calendar, Building, CheckSquare, AlertCircle, AlertTriangle } from 'lucide-react'
 import GlobalSearch from '../components/search/GlobalSearch'
-import AnalyticsSummary from '../components/analytics/AnalyticsSummary'
-import AnalyticsDashboard from '../components/analytics/AnalyticsDashboard'
-import AddAssetModal from '../components/assets/AddAssetModal'
-import AddTaskModal from '../components/tasks/AddTaskModal'
-import { PhaseBadge } from '../components/phases'
-import { PHASES, PHASE_COLORS } from '../types/phaseTypes'
 
 const Dashboard = () => {
   usePageTitle('Dashboard')
   
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { assets, getAssetStats } = useAssetStore()
-  const { getTaskStats, getUpcomingTasks } = useTaskStore()
-  const { getPhaseStatistics, getPhaseDistribution, getUpcomingTransitions, calculatePhaseMetrics } = usePhaseStore()
-  const { isOpen: isSearchOpen, openSearch, closeSearch } = useGlobalSearch()
-  const [showAddAsset, setShowAddAsset] = useState(false)
-  const [showAddTask, setShowAddTask] = useState(false)
-  const [showAnalytics, setShowAnalytics] = useState(false)
-
-  // Initialize phase data for existing assets
-  useEffect(() => {
-    assets.forEach(asset => {
-      if (asset.currentPhase && asset.phaseMetadata) {
-        // This would normally be done in the asset store, but for demo purposes
-        // we'll just ensure the phase store is aware of the assets
-      }
-    })
-    calculatePhaseMetrics()
-  }, [assets, calculatePhaseMetrics])
-
-  const assetStats = getAssetStats()
-  const taskStats = getTaskStats()
-  const upcomingTasks = getUpcomingTasks(7)
-  const phaseStats = getPhaseStatistics()
-  const phaseDistribution = getPhaseDistribution()
-  const upcomingPhaseTransitions = getUpcomingTransitions(30)
+  const { isOpen: isSearchOpen, closeSearch } = useGlobalSearch()
 
   const stats = [
     { title: 'Total Assets', value: 25, color: 'bg-blue-500 text-white p-6 rounded-xl shadow-sm', icon: Building },
@@ -53,49 +19,30 @@ const Dashboard = () => {
     { title: 'Flagged', value: 0, color: 'bg-red-500 text-white p-6 rounded-xl shadow-sm', icon: CheckSquare },
   ]
 
-  const recentActivities = upcomingTasks.slice(0, 4).map(task => ({
-    type: task.title,
-    date: new Date(task.dueDate).toLocaleDateString(),
-    priority: task.priority.toLowerCase(),
-    assetName: task.assetName,
-    taskType: task.type
-  }))
-
-  // Convert phase distribution to chart data
-  const phaseChartData = Object.entries(phaseDistribution).map(([phase, count]) => {
-    const total = Object.values(phaseDistribution).reduce((sum, c) => sum + c, 0)
-    const phaseColors = PHASE_COLORS[phase]
-    return {
-      label: phase,
-      percentage: total > 0 ? Math.round((count / total) * 100) : 0,
-      color: phaseColors?.dot || 'bg-gray-500',
-      count: count
-    }
-  }).filter(item => item.count > 0)
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             Welcome {user?.name || 'User'}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Get started by adding your first asset or creating your first task
           </p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
           <button
-            onClick={() => setShowAddAsset(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
+            onClick={() => navigate('/assets/add')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Asset
           </button>
           <button
-            onClick={() => setShowAddTask(true)}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center"
+            onClick={() => navigate('/tasks/add')}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg flex items-center justify-center"
           >
             <Plus className="w-4 h-4 mr-2" />
             Add New Task
@@ -104,15 +51,15 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat, index) => (
           <div key={index} className={stat.color}>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div className="flex-1">
-                <div className="text-sm opacity-90 mb-2">{stat.title}</div>
-                <div className="text-3xl font-bold">{stat.value}</div>
+                <div className="text-xs sm:text-sm opacity-90 mb-1 sm:mb-2">{stat.title}</div>
+                <div className="text-xl sm:text-3xl font-bold">{stat.value}</div>
               </div>
-              <stat.icon className="w-8 h-8 opacity-80" />
+              <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 opacity-80 mt-2 sm:mt-0 self-end sm:self-auto" />
             </div>
           </div>
         ))}
@@ -254,18 +201,6 @@ const Dashboard = () => {
       <GlobalSearch
         isOpen={isSearchOpen}
         onClose={closeSearch}
-      />
-
-      {/* Add Asset Modal */}
-      <AddAssetModal
-        isOpen={showAddAsset}
-        onClose={() => setShowAddAsset(false)}
-      />
-
-      {/* Add Task Modal */}
-      <AddTaskModal
-        isOpen={showAddTask}
-        onClose={() => setShowAddTask(false)}
       />
     </div>
   )
