@@ -3,48 +3,28 @@ import {
   ChevronDown, 
   ChevronUp, 
   ChevronLeft, 
-  ChevronRight, 
-  Search, 
-  Filter, 
-  Download, 
-  FileText, 
-  Grid, 
-  List,
+  ChevronRight,
   CheckSquare,
   Square,
   MinusSquare,
-  Settings,
-  RefreshCw,
-  MoreVertical
+  RefreshCw
 } from 'lucide-react'
 
 const EnhancedDataTable = ({ 
   data, 
   columns, 
-  searchable = true, 
-  filterable = true, 
   sortable = true, 
   pagination = true, 
   pageSize = 10,
-  exportable = true,
   bulkActions = [],
   onRowClick,
-  onRefresh,
   className = '',
   emptyMessage = 'No data available',
   loading = false
 }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' })
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filters, setFilters] = useState({})
   const [selectedRows, setSelectedRows] = useState(new Set())
-  const [viewMode, setViewMode] = useState('table')
-  const [columnSettings, setColumnSettings] = useState(
-    columns.reduce((acc, col) => ({ ...acc, [col.key]: { visible: true, width: 'auto' } }), {})
-  )
-  const [showColumnSettings, setShowColumnSettings] = useState(false)
-  const [showExportOptions, setShowExportOptions] = useState(false)
 
   // Handle sorting
   const handleSort = (key) => {
@@ -57,27 +37,8 @@ const EnhancedDataTable = ({
     setSortConfig({ key, direction })
   }
 
-  // Filter and search data
-  const filteredData = data.filter(item => {
-    // Apply search filter
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase()
-      const matchesSearch = columns.some(column => {
-        const value = item[column.key]
-        return value && value.toString().toLowerCase().includes(searchLower)
-      })
-      if (!matchesSearch) return false
-    }
-
-    // Apply column filters
-    for (const [key, value] of Object.entries(filters)) {
-      if (value && item[key] !== value) {
-        return false
-      }
-    }
-
-    return true
-  })
+  // Use data as-is since filtering is handled at page level
+  const filteredData = data
 
   // Sort data
   const sortedData = [...filteredData].sort((a, b) => {
@@ -181,13 +142,6 @@ const EnhancedDataTable = ({
     URL.revokeObjectURL(url)
   }
 
-  // Column visibility toggle
-  const toggleColumnVisibility = (key) => {
-    setColumnSettings(prev => ({
-      ...prev,
-      [key]: { ...prev[key], visible: !prev[key].visible }
-    }))
-  }
 
   // Generate page numbers
   const getPageNumbers = () => {
@@ -231,177 +185,71 @@ const EnhancedDataTable = ({
     return <ChevronDown className="w-4 h-4 ml-1 opacity-0 group-hover:opacity-50" />
   }
 
-  const visibleColumns = columns.filter(col => columnSettings[col.key]?.visible)
+  const visibleColumns = columns
 
   return (
     <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden ${className}`}>
-      {/* Header with controls */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          {/* Search */}
-          {searchable && (
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Controls */}
-          <div className="flex items-center space-x-2">
-            {/* View Mode Toggle */}
-            <div className="flex items-center space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('table')}
-                className={`p-1 rounded-md ${
-                  viewMode === 'table' 
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
-                    : 'text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-1 rounded-md ${
-                  viewMode === 'grid' 
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' 
-                    : 'text-gray-600 dark:text-gray-300'
-                }`}
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Refresh */}
-            {onRefresh && (
-              <button
-                onClick={onRefresh}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Refresh"
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </button>
-            )}
-
-            {/* Column Settings */}
-            <div className="relative">
-              <button
-                onClick={() => setShowColumnSettings(!showColumnSettings)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Column Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-              {showColumnSettings && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
-                  <div className="p-3">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                      Show Columns
-                    </h4>
-                    <div className="space-y-2">
-                      {columns.map(col => (
-                        <label key={col.key} className="flex items-center text-sm">
-                          <input
-                            type="checkbox"
-                            checked={columnSettings[col.key]?.visible}
-                            onChange={() => toggleColumnVisibility(col.key)}
-                            className="mr-2 w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                          />
-                          <span className="text-gray-700 dark:text-gray-300">
-                            {col.label}
-                          </span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+      {/* Simple header with items count and pagination */}
+      <div className="px-6 py-3 border-b border-gray-200">
+        <div className="flex items-center justify-end gap-4">
+          <div className="text-sm text-gray-700">
+            {filteredData.length} items
+          </div>
+          {pagination && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                {currentPage} of {totalPages}
+              </span>
+              {totalPages > 1 && (
+                <div className="flex items-center">
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Export */}
-            {exportable && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowExportOptions(!showExportOptions)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  title="Export"
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-                {showExportOptions && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
-                    <div className="p-2">
-                      <button
-                        onClick={exportToCsv}
-                        className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Export CSV
-                      </button>
-                      <button
-                        onClick={exportToJson}
-                        className="w-full flex items-center px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Export JSON
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )}
         </div>
-
-        {/* Filters */}
-        {filterable && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {columns.filter(col => col.filterable).map(column => (
-              <select
-                key={column.key}
-                value={filters[column.key] || ''}
-                onChange={(e) => setFilters({ ...filters, [column.key]: e.target.value })}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-              >
-                <option value="">All {column.label}</option>
-                {column.filterOptions?.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            ))}
-          </div>
-        )}
-
-        {/* Bulk Actions */}
-        {bulkActions.length > 0 && selectedRows.size > 0 && (
-          <div className="mt-4 flex items-center space-x-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {selectedRows.size} selected
-            </span>
-            {bulkActions.map((action, index) => (
-              <button
-                key={index}
-                onClick={() => action.handler(getSelectedData())}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
+
+      {/* Bulk Actions */}
+      {bulkActions.length > 0 && selectedRows.size > 0 && (
+        <div className="px-6 py-3 flex items-center space-x-2 border-b border-gray-200">
+          <span className="text-sm text-gray-600">
+            {selectedRows.size} selected
+          </span>
+          {bulkActions.map((action, index) => (
+            <button
+              key={action.id || index}
+              onClick={() => {
+                // Call the onBulkAction handler passed from parent component
+                if (action.onClick) {
+                  action.onClick(getSelectedData())
+                }
+              }}
+              className={`px-3 py-1 text-sm rounded-lg transition-colors ${action.className || 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            >
+              {action.icon && <action.icon className="w-4 h-4 mr-1 inline" />}
+              {action.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
               {/* Selection column */}
@@ -422,6 +270,7 @@ const EnhancedDataTable = ({
                   className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
                     sortable && column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 group' : ''
                   }`}
+                  style={column.width ? { width: column.width, maxWidth: column.width } : {}}
                   onClick={() => handleSort(column.key)}
                 >
                   <div className="flex items-center">
@@ -471,7 +320,11 @@ const EnhancedDataTable = ({
                   )}
                   
                   {visibleColumns.map((column) => (
-                    <td key={column.key} className="px-6 py-4 whitespace-nowrap">
+                    <td 
+                      key={column.key} 
+                      className={`px-6 py-4 ${column.key === 'description' ? 'whitespace-normal' : 'whitespace-nowrap'}`}
+                      style={column.width ? { width: column.width, maxWidth: column.width } : {}}
+                    >
                       {column.render ? column.render(item[column.key], item) : item[column.key]}
                     </td>
                   ))}
@@ -488,60 +341,7 @@ const EnhancedDataTable = ({
         </table>
       </div>
 
-      {/* Pagination */}
-      {pagination && totalPages > 1 && (
-        <div className="px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
-            Showing {startIndex + 1} to {Math.min(startIndex + pageSize, sortedData.length)} of {sortedData.length} results
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            {getPageNumbers().map(page => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded-lg text-sm ${
-                  currentPage === page
-                    ? 'bg-blue-600 text-white'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                {page}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
       
-      {/* Click outside handlers */}
-      {showColumnSettings && (
-        <div 
-          className="fixed inset-0 z-0" 
-          onClick={() => setShowColumnSettings(false)}
-        />
-      )}
-      {showExportOptions && (
-        <div 
-          className="fixed inset-0 z-0" 
-          onClick={() => setShowExportOptions(false)}
-        />
-      )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTaskStore } from '../stores/taskStore'
 import { useAssetStore } from '../stores/assetStore'
+import usePageTitle from '../hooks/usePageTitle'
 import { Plus, Filter, Calendar, Clock, User, CheckSquare, AlertCircle, Grid, List } from 'lucide-react'
 import AddTaskModal from '../components/tasks/AddTaskModal'
 import TaskDetailModal from '../components/tasks/TaskDetailModal'
@@ -11,6 +12,8 @@ import { SavedSearchButton } from '../components/search'
 import toast from 'react-hot-toast'
 
 const Tasks = () => {
+  usePageTitle('Tasks')
+  
   const { 
     tasks, 
     filters, 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAssetStore } from '../stores/assetStore'
+import usePageTitle from '../hooks/usePageTitle'
 import { Plus, Grid, List, Filter, Search, SlidersHorizontal } from 'lucide-react'
 import AddAssetModal from '../components/assets/AddAssetModal'
 import AssetDetailModal from '../components/assets/AssetDetailModal'
@@ -14,6 +15,8 @@ import { SavedSearchButton } from '../components/search'
 import toast from 'react-hot-toast'
 
 const Assets = () => {
+  usePageTitle('Assets')
+  
   const { 
     assets, 
     filters, 
@@ -292,7 +295,6 @@ const Assets = () => {
           <AssetTableView
             assets={filteredAssets}
             onView={handleViewAsset}
-            onEdit={handleEditAsset}
             onDelete={handleDeleteAsset}
             loading={loading}
           />

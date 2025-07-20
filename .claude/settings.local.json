@@ -11,7 +11,11 @@
       "Bash(npm test:*)",
       "Bash(npm run lint)",
       "Bash(find:*)",
-      "Bash(npm run test:*)"
+      "Bash(npm run test:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run progress:*)",
+      "Bash(timeout 30s npm run progress)",
+      "Bash(npx eslint:*)"
     ],
     "deny": []
   }

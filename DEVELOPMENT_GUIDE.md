@@ -1,6 +1,30 @@
-# Development Guide - Asset Tracker
+# 🚀 Development Guide - Asset Tracker
 
-## Getting Started
+This comprehensive guide covers everything you need to know to develop and contribute to the Asset Tracker project.
+
+## 📊 Auto-Updated Progress Tracking
+
+### 📋 Available Scripts for Progress Tracking
+
+| Command | Description |
+|---------|-------------|
+| `npm run progress` | Generate progress report and update documentation |
+| `npm run progress:watch` | Track progress and start development server |
+| `npm run docs:update` | Update all project documentation automatically |
+
+### 🎯 Current Project Status
+
+The project documentation and progress tracking are automatically updated using our custom progress tracker script located at `scripts/progress-tracker.js`. This script:
+
+- ✅ Analyzes codebase structure and completion
+- ✅ Updates README.md with real-time progress
+- ✅ Generates detailed progress reports
+- ✅ Tracks feature implementation status
+- ✅ Monitors code metrics and test coverage
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js (v18 or higher)

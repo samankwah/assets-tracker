@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCalendarStore } from '../stores/calendarStore'
 import { useTaskStore } from '../stores/taskStore'
+import usePageTitle from '../hooks/usePageTitle'
 import CalendarView from '../components/calendar/CalendarView'
 import EventModal from '../components/calendar/EventModal'
 import AddTaskModal from '../components/tasks/AddTaskModal'
@@ -8,6 +9,8 @@ import TaskDetailModal from '../components/tasks/TaskDetailModal'
 import toast from 'react-hot-toast'
 
 const Calendar = () => {
+  usePageTitle('Calendar')
+  
   const { 
     currentDate, 
     viewMode, 
