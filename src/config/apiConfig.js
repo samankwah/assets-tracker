@@ -192,10 +192,10 @@ export const shouldUseMockApi = () => {
   // Force mock if explicitly set
   if (API_CONFIG.USE_MOCK_API) return true
   
-  // Use mock in development if no API URL is configured
-  if (isDevelopment() && !import.meta.env.VITE_API_URL) return true
+  // Use mock in development by default (unless explicitly disabled)
+  if (isDevelopment()) return true
   
-  // Use real API in production or when API URL is configured
+  // Use real API in production
   return false
 }
 

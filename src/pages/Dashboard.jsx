@@ -4,6 +4,9 @@ import { useGlobalSearch } from '../hooks/useGlobalSearch'
 import usePageTitle from '../hooks/usePageTitle'
 import { Plus, MoreHorizontal, Calendar, Building, CheckSquare, AlertCircle, AlertTriangle } from 'lucide-react'
 import GlobalSearch from '../components/search/GlobalSearch'
+import { useAssetStore } from '../stores/assetStore'
+import { useTaskStore } from '../stores/taskStore'
+import { useState, useEffect } from 'react'
 
 const Dashboard = () => {
   usePageTitle('Dashboard')
@@ -11,12 +14,57 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { isOpen: isSearchOpen, closeSearch } = useGlobalSearch()
+  const { assets, fetchAssets } = useAssetStore()
+  const { tasks, fetchTasks } = useTaskStore()
+  
+  const [dashboardStats, setDashboardStats] = useState({
+    totalAssets: 0,
+    tasksToday: 0,
+    overdueTasks: 0,
+    flaggedAssets: 0
+  })
+
+  useEffect(() => {
+    fetchAssets()
+    fetchTasks()
+  }, [fetchAssets, fetchTasks])
+
+  useEffect(() => {
+    if (assets.length > 0 || tasks.length > 0) {
+      calculateDashboardStats()
+    }
+  }, [assets, tasks])
+
+  const calculateDashboardStats = () => {
+    const today = new Date()
+    const todayTasks = tasks.filter(task => {
+      const taskDate = new Date(task.dueDate)
+      return taskDate.toDateString() === today.toDateString()
+    })
+    
+    const overdue = tasks.filter(task => {
+      const taskDate = new Date(task.dueDate)
+      return taskDate < today && task.status !== 'Completed'
+    })
+    
+    const flagged = assets.filter(asset => 
+      asset.condition === 'Critical' || asset.condition === 'Needs Repairs'
+    )
+
+    setDashboardStats({
+      totalAssets: assets.length,
+      tasksToday: todayTasks.length,
+      overdueTasks: overdue.length,
+      flaggedAssets: flagged.length
+    })
+  }
+
 
   const stats = [
-    { title: 'Total Assets', value: 25, color: 'bg-blue-500 text-white p-6 rounded-xl shadow-sm', icon: Building },
-    { title: 'Tasks Today', value: 10, color: 'bg-orange-500 text-white p-6 rounded-xl shadow-sm', icon: Calendar },
-    { title: 'Overdue', value: 15, color: 'bg-teal-500 text-white p-6 rounded-xl shadow-sm', icon: AlertCircle },
-    { title: 'Flagged', value: 0, color: 'bg-red-500 text-white p-6 rounded-xl shadow-sm', icon: CheckSquare },
+    { title: 'Total Assets', value: dashboardStats.totalAssets, color: 'bg-blue-500 text-white p-6 rounded-xl shadow-sm', icon: Building },
+    { title: 'Tasks Today', value: dashboardStats.tasksToday, color: 'bg-orange-500 text-white p-6 rounded-xl shadow-sm', icon: Calendar },
+    { title: 'Overdue', value: dashboardStats.overdueTasks, color: 'bg-teal-500 text-white p-6 rounded-xl shadow-sm', icon: AlertCircle },
+    { title: 'Flagged', value: dashboardStats.flaggedAssets, color: 'bg-red-500 text-white p-6 rounded-xl shadow-sm', icon: CheckSquare },
   ]
 
 
@@ -196,6 +244,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
 
       {/* Global Search Modal */}
       <GlobalSearch

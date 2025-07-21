@@ -1,208 +1,276 @@
 /**
- * WebSocket Service for Real-time Features
- * Handles real-time updates for assets, tasks, and notifications
+ * WebSocket Service for Real-time Updates
+ * Handles real-time communication between clients and server
  */
 
-import { API_CONFIG } from '../config/apiConfig'
+import { API_CONFIG } from '../config/apiConfig';
 
 class WebSocketService {
   constructor() {
-    this.ws = null
-    this.reconnectAttempts = 0
-    this.maxReconnectAttempts = 5
-    this.reconnectDelay = 1000
-    this.isConnected = false
-    this.listeners = new Map()
-    this.subscriptions = new Set()
-    this.heartbeatInterval = null
-    this.messageQueue = []
+    this.ws = null;
+    this.reconnectAttempts = 0;
+    this.maxReconnectAttempts = 5;
+    this.reconnectDelay = 1000;
+    this.listeners = new Map();
+    this.isConnecting = false;
+    this.isConnected = false;
+    this.heartbeatInterval = null;
+    this.messageQueue = [];
+    this.userId = null;
+    this.subscriptions = new Set();
   }
 
   /**
-   * Connect to WebSocket server
+   * Initialize WebSocket connection
    */
-  connect(token) {
-    if (!API_CONFIG.FEATURES.REAL_TIME || !API_CONFIG.REALTIME.ENABLE_WEBSOCKETS) {
-      console.log('WebSocket disabled in configuration')
-      return Promise.resolve()
+  connect(userId = null) {
+    if (this.isConnecting || this.isConnected) {
+      return Promise.resolve();
     }
+
+    this.userId = userId;
+    this.isConnecting = true;
 
     return new Promise((resolve, reject) => {
       try {
-        const wsUrl = `${API_CONFIG.REALTIME.WEBSOCKET_URL}?token=${token}`
-        this.ws = new WebSocket(wsUrl)
+        const wsUrl = API_CONFIG.REALTIME.WEBSOCKET_URL || 'ws://localhost:3001';
+        this.ws = new WebSocket(wsUrl);
 
         this.ws.onopen = () => {
-          console.log('🔌 WebSocket connected')
-          this.isConnected = true
-          this.reconnectAttempts = 0
-          this.startHeartbeat()
-          this.flushMessageQueue()
-          resolve()
-        }
+          console.log('🔗 WebSocket connected');
+          this.isConnected = true;
+          this.isConnecting = false;
+          this.reconnectAttempts = 0;
+          
+          // Start heartbeat
+          this.startHeartbeat();
+          
+          // Send authentication if userId is provided
+          if (this.userId) {
+            this.send('authenticate', { userId: this.userId });
+          }
+          
+          // Process queued messages
+          this.processMessageQueue();
+          
+          // Emit connection event
+          this.emit('connected');
+          
+          resolve();
+        };
 
         this.ws.onmessage = (event) => {
-          this.handleMessage(event)
-        }
+          try {
+            const message = JSON.parse(event.data);
+            this.handleMessage(message);
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
 
         this.ws.onclose = (event) => {
-          console.log('🔌 WebSocket disconnected:', event.code, event.reason)
-          this.isConnected = false
-          this.stopHeartbeat()
+          console.log('🔌 WebSocket disconnected', event.code, event.reason);
+          this.isConnected = false;
+          this.isConnecting = false;
+          this.stopHeartbeat();
           
-          if (event.code !== 1000) { // Not a normal closure
-            this.handleReconnect()
+          // Emit disconnection event
+          this.emit('disconnected', { code: event.code, reason: event.reason });
+          
+          // Attempt to reconnect if not intentionally closed
+          if (event.code !== 1000 && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.scheduleReconnect();
           }
-        }
+        };
 
         this.ws.onerror = (error) => {
-          console.error('🔌 WebSocket error:', error)
-          reject(error)
-        }
-
-        // Connection timeout
-        setTimeout(() => {
-          if (!this.isConnected) {
-            reject(new Error('WebSocket connection timeout'))
+          console.error('❌ WebSocket error:', error);
+          this.emit('error', error);
+          
+          if (this.isConnecting) {
+            reject(error);
           }
-        }, 10000)
+        };
 
       } catch (error) {
-        reject(error)
+        console.error('Failed to create WebSocket connection:', error);
+        this.isConnecting = false;
+        reject(error);
       }
-    })
+    });
   }
 
   /**
-   * Disconnect from WebSocket server
+   * Disconnect WebSocket
    */
   disconnect() {
     if (this.ws) {
-      this.isConnected = false
-      this.stopHeartbeat()
-      this.ws.close(1000, 'Client disconnecting')
-      this.ws = null
+      this.ws.close(1000, 'Client disconnecting');
+      this.ws = null;
+    }
+    this.stopHeartbeat();
+    this.isConnected = false;
+    this.isConnecting = false;
+    this.reconnectAttempts = this.maxReconnectAttempts; // Prevent reconnection
+  }
+
+  /**
+   * Send message through WebSocket
+   */
+  send(type, data = {}) {
+    const message = {
+      type,
+      data,
+      timestamp: new Date().toISOString(),
+      id: this.generateMessageId()
+    };
+
+    if (this.isConnected && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(message));
+    } else {
+      // Queue message for later
+      this.messageQueue.push(message);
     }
   }
 
   /**
-   * Send message to server
+   * Subscribe to real-time updates for a specific channel
    */
-  send(message) {
-    if (!this.isConnected) {
-      // Queue message for when connection is restored
-      this.messageQueue.push(message)
-      return false
-    }
+  subscribe(channel) {
+    this.subscriptions.add(channel);
+    this.send('subscribe', { channel });
+  }
 
-    try {
-      this.ws.send(JSON.stringify(message))
-      return true
-    } catch (error) {
-      console.error('Failed to send WebSocket message:', error)
-      return false
+  /**
+   * Unsubscribe from a channel
+   */
+  unsubscribe(channel) {
+    this.subscriptions.delete(channel);
+    this.send('unsubscribe', { channel });
+  }
+
+  /**
+   * Add event listener
+   */
+  on(event, callback) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event).push(callback);
+  }
+
+  /**
+   * Remove event listener
+   */
+  off(event, callback) {
+    if (this.listeners.has(event)) {
+      const callbacks = this.listeners.get(event);
+      const index = callbacks.indexOf(callback);
+      if (index !== -1) {
+        callbacks.splice(index, 1);
+      }
     }
   }
 
   /**
-   * Subscribe to real-time updates for a specific type
+   * Emit event to listeners
    */
-  subscribe(type, callback) {
-    if (!this.listeners.has(type)) {
-      this.listeners.set(type, new Set())
+  emit(event, data = null) {
+    if (this.listeners.has(event)) {
+      this.listeners.get(event).forEach(callback => {
+        try {
+          callback(data);
+        } catch (error) {
+          console.error(`Error in WebSocket listener for ${event}:`, error);
+        }
+      });
     }
+  }
+
+  /**
+   * Handle incoming WebSocket message
+   */
+  handleMessage(message) {
+    const { type, data } = message;
+
+    switch (type) {
+      case 'heartbeat':
+        this.send('heartbeat_ack');
+        break;
+
+      case 'asset_updated':
+        this.emit('assetUpdated', data);
+        break;
+
+      case 'task_updated':
+        this.emit('taskUpdated', data);
+        break;
+
+      case 'task_created':
+        this.emit('taskCreated', data);
+        break;
+
+      case 'task_completed':
+        this.emit('taskCompleted', data);
+        break;
+
+      case 'calendar_event_created':
+        this.emit('calendarEventCreated', data);
+        break;
+
+      case 'calendar_event_updated':
+        this.emit('calendarEventUpdated', data);
+        break;
+
+      case 'notification':
+        this.emit('notification', data);
+        break;
+
+      case 'user_activity':
+        this.emit('userActivity', data);
+        break;
+
+      case 'inspection_scheduled':
+        this.emit('inspectionScheduled', data);
+        break;
+
+      case 'maintenance_alert':
+        this.emit('maintenanceAlert', data);
+        break;
+
+      case 'collaboration_update':
+        this.emit('collaborationUpdate', data);
+        break;
+
+      case 'document_uploaded':
+        this.emit('documentUploaded', data);
+        break;
+
+      case 'phase_transition':
+        this.emit('phaseTransition', data);
+        break;
+
+      default:
+        console.log('Unknown WebSocket message type:', type);
+        this.emit('message', message);
+    }
+  }
+
+  /**
+   * Schedule reconnection attempt
+   */
+  scheduleReconnect() {
+    this.reconnectAttempts++;
+    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
     
-    this.listeners.get(type).add(callback)
-    this.subscriptions.add(type)
-
-    // Send subscription message to server
-    this.send({
-      type: 'subscribe',
-      channel: type,
-      timestamp: new Date().toISOString()
-    })
-
-    return () => this.unsubscribe(type, callback)
-  }
-
-  /**
-   * Unsubscribe from updates
-   */
-  unsubscribe(type, callback) {
-    if (this.listeners.has(type)) {
-      this.listeners.get(type).delete(callback)
-      
-      if (this.listeners.get(type).size === 0) {
-        this.listeners.delete(type)
-        this.subscriptions.delete(type)
-        
-        // Send unsubscribe message to server
-        this.send({
-          type: 'unsubscribe',
-          channel: type,
-          timestamp: new Date().toISOString()
-        })
-      }
-    }
-  }
-
-  /**
-   * Handle incoming messages
-   */
-  handleMessage(event) {
-    try {
-      const message = JSON.parse(event.data)
-      
-      // Handle heartbeat response
-      if (message.type === 'pong') {
-        return
-      }
-
-      // Handle error messages
-      if (message.type === 'error') {
-        console.error('WebSocket server error:', message.error)
-        return
-      }
-
-      // Dispatch to listeners
-      if (this.listeners.has(message.type)) {
-        this.listeners.get(message.type).forEach(callback => {
-          try {
-            callback(message.data)
-          } catch (error) {
-            console.error('Error in WebSocket listener:', error)
-          }
-        })
-      }
-
-    } catch (error) {
-      console.error('Failed to parse WebSocket message:', error)
-    }
-  }
-
-  /**
-   * Handle reconnection logic
-   */
-  handleReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error('Max WebSocket reconnection attempts reached')
-      return
-    }
-
-    this.reconnectAttempts++
-    const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
-    
-    console.log(`🔌 Attempting WebSocket reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`)
+    console.log(`⏰ Scheduling WebSocket reconnection attempt ${this.reconnectAttempts} in ${delay}ms`);
     
     setTimeout(() => {
-      // Get current auth token
-      const token = localStorage.getItem(API_CONFIG.AUTH.TOKEN_KEY)
-      if (token) {
-        this.connect(token).catch(error => {
-          console.error('WebSocket reconnection failed:', error)
-        })
+      if (!this.isConnected && this.reconnectAttempts <= this.maxReconnectAttempts) {
+        console.log(`🔄 Attempting WebSocket reconnection (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+        this.connect(this.userId);
       }
-    }, delay)
+    }, delay);
   }
 
   /**
@@ -211,9 +279,9 @@ class WebSocketService {
   startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
       if (this.isConnected) {
-        this.send({ type: 'ping', timestamp: new Date().toISOString() })
+        this.send('heartbeat');
       }
-    }, 30000) // Send ping every 30 seconds
+    }, 30000); // Send heartbeat every 30 seconds
   }
 
   /**
@@ -221,19 +289,26 @@ class WebSocketService {
    */
   stopHeartbeat() {
     if (this.heartbeatInterval) {
-      clearInterval(this.heartbeatInterval)
-      this.heartbeatInterval = null
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
     }
   }
 
   /**
-   * Flush queued messages
+   * Process queued messages
    */
-  flushMessageQueue() {
+  processMessageQueue() {
     while (this.messageQueue.length > 0) {
-      const message = this.messageQueue.shift()
-      this.send(message)
+      const message = this.messageQueue.shift();
+      this.ws.send(JSON.stringify(message));
     }
+  }
+
+  /**
+   * Generate unique message ID
+   */
+  generateMessageId() {
+    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
@@ -241,177 +316,112 @@ class WebSocketService {
    */
   getStatus() {
     return {
-      connected: this.isConnected,
+      isConnected: this.isConnected,
+      isConnecting: this.isConnecting,
       reconnectAttempts: this.reconnectAttempts,
-      subscriptions: Array.from(this.subscriptions),
-      queuedMessages: this.messageQueue.length
-    }
-  }
-
-  // Real-time update methods for specific features
-
-  /**
-   * Subscribe to asset updates
-   */
-  subscribeToAssetUpdates(callback) {
-    return this.subscribe('asset_update', callback)
+      subscriptions: Array.from(this.subscriptions)
+    };
   }
 
   /**
-   * Subscribe to task updates
+   * Real-time asset operations
    */
-  subscribeToTaskUpdates(callback) {
-    return this.subscribe('task_update', callback)
-  }
-
-  /**
-   * Subscribe to notification updates
-   */
-  subscribeToNotificationUpdates(callback) {
-    return this.subscribe('notification_update', callback)
-  }
-
-  /**
-   * Subscribe to user activity updates
-   */
-  subscribeToUserActivity(callback) {
-    return this.subscribe('user_activity', callback)
-  }
-
-  /**
-   * Subscribe to system alerts
-   */
-  subscribeToSystemAlerts(callback) {
-    return this.subscribe('system_alert', callback)
-  }
-
-  /**
-   * Broadcast asset update
-   */
-  broadcastAssetUpdate(asset) {
-    this.send({
-      type: 'asset_update',
-      data: asset,
+  broadcastAssetUpdate(assetId, changes) {
+    this.send('asset_update', {
+      assetId,
+      changes,
+      userId: this.userId,
       timestamp: new Date().toISOString()
-    })
+    });
   }
 
-  /**
-   * Broadcast task update
-   */
-  broadcastTaskUpdate(task) {
-    this.send({
-      type: 'task_update',
-      data: task,
+  broadcastTaskUpdate(taskId, changes) {
+    this.send('task_update', {
+      taskId,
+      changes,
+      userId: this.userId,
       timestamp: new Date().toISOString()
-    })
+    });
   }
 
-  /**
-   * Broadcast notification
-   */
+  broadcastTaskCompletion(taskId, completionData) {
+    this.send('task_completion', {
+      taskId,
+      completionData,
+      userId: this.userId,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  broadcastCalendarEvent(eventData) {
+    this.send('calendar_event', {
+      eventData,
+      userId: this.userId,
+      timestamp: new Date().toISOString()
+    });
+  }
+
   broadcastNotification(notification) {
-    this.send({
-      type: 'notification_update',
-      data: notification,
+    this.send('notification_broadcast', {
+      notification,
+      userId: this.userId,
       timestamp: new Date().toISOString()
-    })
+    });
   }
 
   /**
-   * Join a room for collaborative features
+   * Team collaboration features
    */
-  joinRoom(roomId) {
-    this.send({
-      type: 'join_room',
-      roomId,
+  joinCollaborationSession(sessionId) {
+    this.send('join_collaboration', {
+      sessionId,
+      userId: this.userId
+    });
+  }
+
+  leaveCollaborationSession(sessionId) {
+    this.send('leave_collaboration', {
+      sessionId,
+      userId: this.userId
+    });
+  }
+
+  sendCollaborationUpdate(sessionId, update) {
+    this.send('collaboration_update', {
+      sessionId,
+      update,
+      userId: this.userId,
       timestamp: new Date().toISOString()
-    })
+    });
   }
 
   /**
-   * Leave a room
+   * Live user activity tracking
    */
-  leaveRoom(roomId) {
-    this.send({
-      type: 'leave_room',
-      roomId,
+  updateUserActivity(activity) {
+    this.send('user_activity', {
+      activity,
+      userId: this.userId,
       timestamp: new Date().toISOString()
-    })
+    });
+  }
+
+  /**
+   * Request live dashboard updates
+   */
+  requestDashboardUpdates() {
+    this.subscribe('dashboard_updates');
+  }
+
+  /**
+   * Request real-time analytics updates
+   */
+  requestAnalyticsUpdates() {
+    this.subscribe('analytics_updates');
   }
 }
 
 // Create singleton instance
-const websocketService = new WebSocketService()
+const websocketService = new WebSocketService();
 
-// Mock WebSocket for development/testing
-class MockWebSocketService {
-  constructor() {
-    this.isConnected = false
-    this.listeners = new Map()
-    this.subscriptions = new Set()
-  }
-
-  connect() {
-    console.log('🔌 Mock WebSocket connected')
-    this.isConnected = true
-    return Promise.resolve()
-  }
-
-  disconnect() {
-    console.log('🔌 Mock WebSocket disconnected')
-    this.isConnected = false
-  }
-
-  send(message) {
-    console.log('📤 Mock WebSocket message:', message)
-    return true
-  }
-
-  subscribe(type, callback) {
-    if (!this.listeners.has(type)) {
-      this.listeners.set(type, new Set())
-    }
-    this.listeners.get(type).add(callback)
-    this.subscriptions.add(type)
-    
-    console.log(`📡 Mock WebSocket subscribed to: ${type}`)
-    
-    return () => this.unsubscribe(type, callback)
-  }
-
-  unsubscribe(type, callback) {
-    if (this.listeners.has(type)) {
-      this.listeners.get(type).delete(callback)
-      console.log(`📡 Mock WebSocket unsubscribed from: ${type}`)
-    }
-  }
-
-  getStatus() {
-    return {
-      connected: this.isConnected,
-      reconnectAttempts: 0,
-      subscriptions: Array.from(this.subscriptions),
-      queuedMessages: 0
-    }
-  }
-
-  // Mock versions of subscription methods
-  subscribeToAssetUpdates(callback) { return this.subscribe('asset_update', callback) }
-  subscribeToTaskUpdates(callback) { return this.subscribe('task_update', callback) }
-  subscribeToNotificationUpdates(callback) { return this.subscribe('notification_update', callback) }
-  subscribeToUserActivity(callback) { return this.subscribe('user_activity', callback) }
-  subscribeToSystemAlerts(callback) { return this.subscribe('system_alert', callback) }
-  broadcastAssetUpdate(asset) { this.send({ type: 'asset_update', data: asset }) }
-  broadcastTaskUpdate(task) { this.send({ type: 'task_update', data: task }) }
-  broadcastNotification(notification) { this.send({ type: 'notification_update', data: notification }) }
-  joinRoom(roomId) { this.send({ type: 'join_room', roomId }) }
-  leaveRoom(roomId) { this.send({ type: 'leave_room', roomId }) }
-}
-
-// Export the appropriate service based on configuration
-export default API_CONFIG.FEATURES.REAL_TIME && !API_CONFIG.USE_MOCK_API 
-  ? websocketService 
-  : new MockWebSocketService()
-
-export { WebSocketService, MockWebSocketService }
+export default websocketService;

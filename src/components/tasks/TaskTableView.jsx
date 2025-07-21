@@ -125,56 +125,81 @@ const TaskTableView = ({ tasks, onView, onDelete, onComplete }) => {
       key: 'assetName',
       label: 'Asset Name',
       sortable: true,
+      width: '200px',
       render: (value) => (
-        <span className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium">
-          {value}
-        </span>
+        <div className="min-w-0">
+          <span className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium truncate block">
+            {value}
+          </span>
+        </div>
       )
     },
     {
       key: 'assetType',
       label: 'Asset Type',
       sortable: true,
+      width: '120px',
       render: (value) => (
-        <span className="text-gray-600">{value}</span>
+        <div className="text-gray-600 truncate">{value}</div>
       )
     },
     {
       key: 'assetStatus',
       label: 'Asset Status',
       sortable: true,
+      width: '160px',
       filterable: true,
       filterOptions: ['Active', 'Under Maintenance', 'Decommissioned'],
-      render: (value) => getAssetStatusBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getAssetStatusBadge(value)}
+        </div>
+      )
     },
     {
       key: 'assetCondition',
       label: 'Asset Condition',
       sortable: true,
+      width: '140px',
       filterable: true,
       filterOptions: ['Good', 'Needs Repairs', 'Critical'],
-      render: (value) => getAssetConditionBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getAssetConditionBadge(value)}
+        </div>
+      )
     },
     {
       key: 'type',
-      label: 'Task type',
+      label: 'Task Type',
       sortable: true,
+      width: '130px',
       filterable: true,
       filterOptions: ['Inspection', 'Maintenance', 'Safety Check', 'Cleaning', 'Planning', 'Repair'],
-      render: (value) => getTaskTypeBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getTaskTypeBadge(value)}
+        </div>
+      )
     },
     {
       key: 'priority',
-      label: 'Task Priority',
+      label: 'Priority',
       sortable: true,
+      width: '120px',
       filterable: true,
       filterOptions: ['High', 'Medium', 'Low'],
-      render: (value) => getPriorityBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getPriorityBadge(value)}
+        </div>
+      )
     },
     {
       key: 'urgency',
       label: 'Urgency',
       sortable: true,
+      width: '140px',
       render: (value, item) => {
         const dueDate = new Date(item.dueDate)
         const today = new Date()
@@ -182,25 +207,26 @@ const TaskTableView = ({ tasks, onView, onDelete, onComplete }) => {
         const isToday = dueDate.toDateString() === today.toDateString()
         
         if (isOverdue) {
-          return <span className="text-gray-600">Overdue</span>
+          return <div className="text-red-600 text-sm truncate">Overdue</div>
         } else if (isToday) {
-          return <span className="text-gray-600">Due Today</span>
+          return <div className="text-orange-600 text-sm truncate">Due Today</div>
         } else {
           const diffTime = dueDate - today
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
           if (diffDays <= 7) {
-            return <span className="text-gray-600">Due in {diffDays} days</span>
+            return <div className="text-yellow-600 text-sm truncate">Due in {diffDays} days</div>
           }
-          return <span className="text-gray-600">Due in {diffDays} days</span>
+          return <div className="text-gray-600 text-sm truncate">Due in {diffDays} days</div>
         }
       }
     },
     {
-      key: 'inspectionStatus',
-      label: 'Inspection Status',
+      key: 'status',
+      label: 'Task Status',
       sortable: true,
+      width: '140px',
       filterable: true,
-      filterOptions: ['Not Inspected', 'Inspected', 'Due Soon', 'Overdue'],
+      filterOptions: ['Not Inspected', 'Completed', 'In Progress', 'Scheduled', 'Overdue'],
       render: (value, item) => {
         // Generate inspection status based on task data
         const dueDate = new Date(item.dueDate)
@@ -208,13 +234,15 @@ const TaskTableView = ({ tasks, onView, onDelete, onComplete }) => {
         const isOverdue = dueDate < today && item.status !== 'Completed'
         
         if (item.status === 'Completed') {
-          return getInspectionStatusBadge('Inspected')
+          return <div className="text-green-600 text-sm truncate">Completed</div>
         } else if (isOverdue) {
-          return getInspectionStatusBadge('Overdue')
-        } else if (item.type === 'Inspection') {
-          return getInspectionStatusBadge('Due Soon')
+          return <div className="text-red-600 text-sm truncate">Overdue</div>
+        } else if (item.status === 'In Progress') {
+          return <div className="text-blue-600 text-sm truncate">In Progress</div>
+        } else if (item.status === 'Scheduled') {
+          return <div className="text-orange-600 text-sm truncate">Scheduled</div>
         } else {
-          return getInspectionStatusBadge('Not Inspected')
+          return <div className="text-gray-600 text-sm truncate">{item.status}</div>
         }
       }
     }

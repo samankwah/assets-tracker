@@ -249,12 +249,12 @@ const EnhancedDataTable = ({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
+        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'auto', minWidth: '1000px' }}>
           <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
               {/* Selection column */}
               {bulkActions.length > 0 && (
-                <th className="px-6 py-3 text-left">
+                <th className="px-4 py-4 text-left w-12">
                   <button
                     onClick={handleSelectAll}
                     className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
@@ -267,14 +267,14 @@ const EnhancedDataTable = ({
               {visibleColumns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
+                  className={`px-4 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider ${
                     sortable && column.sortable ? 'cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 group' : ''
                   }`}
-                  style={column.width ? { width: column.width, maxWidth: column.width } : {}}
+                  style={column.width ? { width: column.width, minWidth: column.width } : { minWidth: '120px' }}
                   onClick={() => handleSort(column.key)}
                 >
-                  <div className="flex items-center">
-                    {column.label}
+                  <div className="flex items-center space-x-1">
+                    <span className="truncate">{column.label}</span>
                     <SortIcon column={column} />
                   </div>
                 </th>
@@ -284,7 +284,7 @@ const EnhancedDataTable = ({
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {loading ? (
               <tr>
-                <td colSpan={visibleColumns.length + (bulkActions.length > 0 ? 1 : 0)} className="px-6 py-8 text-center">
+                <td colSpan={visibleColumns.length + (bulkActions.length > 0 ? 1 : 0)} className="px-4 py-8 text-center">
                   <div className="flex items-center justify-center space-x-2">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     <span className="text-gray-500 dark:text-gray-400">Loading...</span>
@@ -302,7 +302,7 @@ const EnhancedDataTable = ({
                 >
                   {/* Selection column */}
                   {bulkActions.length > 0 && (
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-5 whitespace-nowrap w-12">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
@@ -322,17 +322,19 @@ const EnhancedDataTable = ({
                   {visibleColumns.map((column) => (
                     <td 
                       key={column.key} 
-                      className={`px-6 py-4 ${column.key === 'description' ? 'whitespace-normal' : 'whitespace-nowrap'}`}
-                      style={column.width ? { width: column.width, maxWidth: column.width } : {}}
+                      className={`px-4 py-5 ${column.key === 'description' ? 'whitespace-normal' : 'whitespace-nowrap'} text-sm`}
+                      style={column.width ? { width: column.width, minWidth: column.width } : { minWidth: '120px' }}
                     >
-                      {column.render ? column.render(item[column.key], item) : item[column.key]}
+                      <div className="overflow-hidden">
+                        {column.render ? column.render(item[column.key], item) : item[column.key]}
+                      </div>
                     </td>
                   ))}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={visibleColumns.length + (bulkActions.length > 0 ? 1 : 0)} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={visibleColumns.length + (bulkActions.length > 0 ? 1 : 0)} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   {emptyMessage}
                 </td>
               </tr>

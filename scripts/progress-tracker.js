@@ -18,15 +18,17 @@ const projectRoot = path.resolve(__dirname, '..');
 class ProgressTracker {
   constructor() {
     this.features = {
-      authentication: { weight: 10, files: ['src/pages/auth/', 'src/context/AuthContext.jsx'] },
-      dashboard: { weight: 15, files: ['src/pages/Dashboard.jsx', 'src/components/dashboard/'] },
-      assetManagement: { weight: 20, files: ['src/pages/Assets.jsx', 'src/components/assets/', 'src/stores/assetStore.js'] },
+      authentication: { weight: 8, files: ['src/pages/auth/', 'src/context/AuthContext.jsx'] },
+      dashboard: { weight: 12, files: ['src/pages/Dashboard.jsx', 'src/components/dashboard/'] },
+      assetManagement: { weight: 18, files: ['src/pages/Assets.jsx', 'src/components/assets/', 'src/stores/assetStore.js'] },
       taskManagement: { weight: 15, files: ['src/pages/Tasks.jsx', 'src/components/tasks/', 'src/stores/taskStore.js'] },
-      calendar: { weight: 15, files: ['src/pages/Calendar.jsx', 'src/components/calendar/', 'src/stores/calendarStore.js'] },
-      settings: { weight: 10, files: ['src/pages/Settings.jsx'] },
+      calendar: { weight: 12, files: ['src/pages/Calendar.jsx', 'src/components/calendar/', 'src/stores/calendarStore.js'] },
+      settings: { weight: 8, files: ['src/pages/Settings.jsx'] },
       responsive: { weight: 5, files: ['src/components/layout/', 'tailwind.config.js'] },
-      theme: { weight: 5, files: ['src/context/ThemeContext.jsx'] },
-      search: { weight: 5, files: ['src/components/search/', 'src/stores/searchStore.js'] }
+      theme: { weight: 4, files: ['src/context/ThemeContext.jsx'] },
+      search: { weight: 8, files: ['src/components/search/', 'src/stores/searchStore.js'] },
+      analytics: { weight: 10, files: ['src/components/analytics/', 'src/utils/analyticsUtils.js'] },
+      realtime: { weight: 10, files: ['src/services/websocketService.js', 'src/context/WebSocketContext.jsx', 'src/components/realtime/', 'websocket-server.js'] }
     };
 
     this.progress = {
@@ -269,7 +271,9 @@ class ProgressTracker {
       settings: '⚙️',
       responsive: '📱',
       theme: '🌙',
-      search: '🔍'
+      search: '🔍',
+      analytics: '📈',
+      realtime: '⚡'
     };
     return emojiMap[featureName] || '🔧';
   }
@@ -284,7 +288,9 @@ class ProgressTracker {
       settings: 'Settings Panel',
       responsive: 'Responsive Design',
       theme: 'Theme System',
-      search: 'Search & Filtering'
+      search: 'Search & Filtering',
+      analytics: 'Advanced Analytics',
+      realtime: 'Real-time Features'
     };
     return nameMap[featureName] || featureName;
   }

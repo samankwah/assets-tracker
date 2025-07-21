@@ -33,6 +33,7 @@ import { useTaskStore } from '../../stores/taskStore';
 import { analyticsUtils } from '../../utils/analyticsUtils';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
+import FinancialAnalytics from './FinancialAnalytics';
 
 const AnalyticsDashboard = ({ isOpen, onClose }) => {
   const { assets } = useAssetStore();
@@ -462,6 +463,11 @@ const AnalyticsDashboard = ({ isOpen, onClose }) => {
                     </ResponsiveContainer>
                   </div>
                 </div>
+              )}
+
+              {/* Financial Tab */}
+              {activeTab === 'financial' && (
+                <FinancialAnalytics assets={assets} tasks={tasks} />
               )}
             </>
           ) : (

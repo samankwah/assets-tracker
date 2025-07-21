@@ -82,16 +82,16 @@ const AssetTableView = ({ assets, onView, onDelete }) => {
       key: 'name',
       label: 'Asset Name',
       sortable: true,
-      width: '250px',
+      width: '280px',
       render: (value, item) => (
         <div className="flex items-center space-x-3">
           <img
             src={item.images?.[0] || '/api/placeholder/50/50'}
             alt={value}
-            className="w-12 h-12 rounded-lg object-cover"
+            className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
           />
-          <div>
-            <div className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer">
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-blue-600 hover:text-blue-800 cursor-pointer truncate">
               {value}
             </div>
           </div>
@@ -102,13 +102,13 @@ const AssetTableView = ({ assets, onView, onDelete }) => {
       key: 'description',
       label: 'Description',
       sortable: true,
-      width: '200px',
+      width: '220px',
       render: (value, item) => {
         const description = item.details?.features?.join(', ') || 'This two-story home offers an inviting living room, a well-appointed kitchen with modern appliances'
-        const truncatedDescription = description.length > 45 ? description.substring(0, 45) + '...' : description
+        const truncatedDescription = description.length > 50 ? description.substring(0, 50) + '...' : description
         return (
           <div className="text-sm text-gray-600">
-            <div className="break-words overflow-hidden">
+            <div className="break-words line-clamp-2">
               {truncatedDescription}
             </div>
           </div>
@@ -119,26 +119,35 @@ const AssetTableView = ({ assets, onView, onDelete }) => {
       key: 'inspectionStatus',
       label: 'Inspection Status',
       sortable: true,
-      width: '140px',
+      width: '160px',
       filterable: true,
       filterOptions: ['Recently Inspected', 'Inspection Due', 'Inspection Overdue', 'Not Inspected'],
-      render: (value) => getInspectionStatusBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getInspectionStatusBadge(value)}
+        </div>
+      )
     },
     {
       key: 'status',
       label: 'Asset Status',
       sortable: true,
-      width: '180px',
+      width: '200px',
       filterable: true,
       filterOptions: ['Scheduled for Inspection', 'Due For Maintenance', 'Overdue For Maintenance', 'Under Maintenance'],
-      render: (value) => getStatusBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getStatusBadge(value)}
+        </div>
+      )
     },
     {
       key: 'tags',
       label: 'Tags',
       sortable: true,
+      width: '140px',
       render: (value, item) => (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 truncate">
           {item.priority || 'Inspection Due Soon'}
         </div>
       )
@@ -147,8 +156,9 @@ const AssetTableView = ({ assets, onView, onDelete }) => {
       key: 'frequency',
       label: 'Frequency',
       sortable: true,
+      width: '120px',
       render: (value, item) => (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 truncate">
           {item.frequency}
         </div>
       )
@@ -157,9 +167,14 @@ const AssetTableView = ({ assets, onView, onDelete }) => {
       key: 'condition',
       label: 'Condition',
       sortable: true,
+      width: '120px',
       filterable: true,
       filterOptions: ['Good', 'Fair', 'Needs Repairs', 'Critical'],
-      render: (value) => getConditionBadge(value)
+      render: (value) => (
+        <div className="min-w-0">
+          {getConditionBadge(value)}
+        </div>
+      )
     }
   ]
 
