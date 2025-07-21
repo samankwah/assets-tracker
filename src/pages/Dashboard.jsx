@@ -169,25 +169,40 @@ const Dashboard = () => {
             </button>
           </div>
           <div className="space-y-3">
-            <div className="bg-blue-600 text-white p-3 rounded-lg">
-              <div className="text-sm font-medium">Home Inspection with Agent K</div>
-              <div className="text-xs opacity-80">20 September 2024</div>
+            <div className="flex items-start space-x-3 bg-blue-600 text-white p-3 rounded-lg">
+              <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">Home Inspection with Agent K</div>
+                <div className="text-xs opacity-80">20 September 2024</div>
+              </div>
             </div>
-            <div className="bg-red-500 text-white p-3 rounded-lg">
-              <div className="text-sm font-medium">Home Inspection with Agent K</div>
-              <div className="text-xs opacity-80">20 September 2024</div>
+            <div className="flex items-start space-x-3 bg-red-500 text-white p-3 rounded-lg">
+              <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">Home Inspection with Agent K</div>
+                <div className="text-xs opacity-80">20 September 2024</div>
+              </div>
             </div>
-            <div className="bg-blue-600 text-white p-3 rounded-lg">
-              <div className="text-sm font-medium">Home Inspection with Agent K</div>
-              <div className="text-xs opacity-80">20 September 2024</div>
+            <div className="flex items-start space-x-3 bg-blue-600 text-white p-3 rounded-lg">
+              <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">Home Inspection with Agent K</div>
+                <div className="text-xs opacity-80">20 September 2024</div>
+              </div>
             </div>
-            <div className="bg-orange-500 text-white p-3 rounded-lg">
-              <div className="text-sm font-medium">Home Inspection with Agent K</div>
-              <div className="text-xs opacity-80">20 September 2024</div>
+            <div className="flex items-start space-x-3 bg-orange-500 text-white p-3 rounded-lg">
+              <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">Home Inspection with Agent K</div>
+                <div className="text-xs opacity-80">20 September 2024</div>
+              </div>
             </div>
-            <div className="bg-orange-500 text-white p-3 rounded-lg">
-              <div className="text-sm font-medium">Home Inspection with Agent K</div>
-              <div className="text-xs opacity-80">20 September 2024</div>
+            <div className="flex items-start space-x-3 bg-orange-500 text-white p-3 rounded-lg">
+              <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+              <div className="flex-1">
+                <div className="text-sm font-medium">Home Inspection with Agent K</div>
+                <div className="text-xs opacity-80">20 September 2024</div>
+              </div>
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
