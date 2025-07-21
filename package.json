@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "progress": "node scripts/progress-tracker.js",
+    "progress:watch": "npm run progress && npm run dev",
+    "docs:update": "npm run progress && echo 'Documentation updated successfully!'"
   },
   "dependencies": {
     "@sentry/react": "^9.40.0",

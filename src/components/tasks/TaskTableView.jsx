@@ -1,8 +1,21 @@
-import { Eye, Edit, Trash2, Calendar, Clock, User, Building, CheckCircle, Archive, RotateCcw } from 'lucide-react'
+import { Trash2, CheckCircle, Archive, RotateCcw } from 'lucide-react'
 import EnhancedDataTable from '../ui/EnhancedDataTable'
+import { useAssetStore } from '../../stores/assetStore'
 import toast from 'react-hot-toast'
 
-const TaskTableView = ({ tasks, onView, onEdit, onDelete, onComplete }) => {
+const TaskTableView = ({ tasks, onView, onDelete, onComplete }) => {
+  const { getAssetById } = useAssetStore()
+
+  // Enhance tasks with asset information
+  const enhancedTasks = tasks.map(task => {
+    const asset = getAssetById(task.assetId)
+    return {
+      ...task,
+      assetType: asset?.type || 'Unknown',
+      assetStatus: asset?.status || 'Unknown',
+      assetCondition: asset?.condition || 'Unknown'
+    }
+  })
   const handleBulkAction = (action, selectedTasks) => {
     switch (action) {
       case 'delete':
@@ -29,226 +42,197 @@ const TaskTableView = ({ tasks, onView, onEdit, onDelete, onComplete }) => {
   };
 
   const bulkActions = [
-    { id: 'complete', label: 'Mark as Complete', icon: CheckCircle, className: 'text-green-600 hover:text-green-700' },
-    { id: 'archive', label: 'Archive Selected', icon: Archive, className: 'text-yellow-600 hover:text-yellow-700' },
-    { id: 'reset', label: 'Reset to Pending', icon: RotateCcw, className: 'text-blue-600 hover:text-blue-700' },
-    { id: 'delete', label: 'Delete Selected', icon: Trash2, className: 'text-red-600 hover:text-red-700' }
-  ];
-  const getStatusBadge = (status) => {
-    const badges = {
-      'Completed': <span className="badge badge-success">Completed</span>,
-      'Under Maintenance': <span className="badge badge-warning">Under Maintenance</span>,
-      'Recently Inspected': <span className="badge badge-success">Recently Inspected</span>,
-      'Scheduled for Inspection': <span className="badge badge-info">Scheduled for Inspection</span>,
-      'Overdue': <span className="badge badge-error">Overdue</span>,
-      'Not Inspected': <span className="badge badge-gray">Not Inspected</span>
+    { 
+      id: 'complete', 
+      label: 'Mark as Complete', 
+      icon: CheckCircle, 
+      className: 'bg-green-600 text-white hover:bg-green-700',
+      onClick: (selectedTasks) => handleBulkAction('complete', selectedTasks)
+    },
+    { 
+      id: 'archive', 
+      label: 'Archive Selected', 
+      icon: Archive, 
+      className: 'bg-yellow-600 text-white hover:bg-yellow-700',
+      onClick: (selectedTasks) => handleBulkAction('archive', selectedTasks)
+    },
+    { 
+      id: 'reset', 
+      label: 'Reset to Pending', 
+      icon: RotateCcw, 
+      className: 'bg-blue-600 text-white hover:bg-blue-700',
+      onClick: (selectedTasks) => handleBulkAction('reset', selectedTasks)
+    },
+    { 
+      id: 'delete', 
+      label: 'Delete Selected', 
+      icon: Trash2, 
+      className: 'bg-red-600 text-white hover:bg-red-700',
+      onClick: (selectedTasks) => handleBulkAction('delete', selectedTasks)
     }
-    return badges[status] || <span className="badge badge-gray">{status}</span>
+  ];
+  const getAssetStatusBadge = (status) => {
+    const badges = {
+      'Active': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Active</span>,
+      'Under Maintenance': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Under Maintenance</span>,
+      'Decommissioned': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Decommissioned</span>
+    }
+    return badges[status] || <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{status}</span>
+  }
+
+  const getAssetConditionBadge = (condition) => {
+    const badges = {
+      'Good': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Good</span>,
+      'Needs Repairs': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">Needs Repairs</span>,
+      'Critical': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Critical</span>
+    }
+    return badges[condition] || <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{condition}</span>
+  }
+
+  const getTaskTypeBadge = (type) => {
+    const badges = {
+      'Inspection': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Inspection</span>,
+      'Maintenance': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">Maintenance</span>,
+      'Safety Check': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Safety Check</span>,
+      'Cleaning': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Cleaning</span>,
+      'Planning': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Planning</span>,
+      'Repair': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">Repair</span>
+    }
+    return badges[type] || <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{type}</span>
   }
 
   const getPriorityBadge = (priority) => {
     const badges = {
-      'High': <span className="badge badge-error">High</span>,
-      'Medium': <span className="badge badge-warning">Medium</span>,
-      'Low': <span className="badge badge-success">Low</span>
+      'High': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">High</span>,
+      'Medium': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">Medium</span>,
+      'Low': <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Low</span>
     }
-    return badges[priority] || <span className="badge badge-gray">{priority}</span>
+    return badges[priority] || <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">{priority}</span>
   }
 
-  const getTypeBadge = (type) => {
+  const getInspectionStatusBadge = (status) => {
     const badges = {
-      'Inspection': <span className="badge badge-info">Inspection</span>,
-      'Maintenance': <span className="badge badge-warning">Maintenance</span>,
-      'Safety Check': <span className="badge badge-error">Safety Check</span>,
-      'Cleaning': <span className="badge badge-success">Cleaning</span>,
-      'Planning': <span className="badge badge-info">Planning</span>,
-      'Repair': <span className="badge badge-warning">Repair</span>
+      'Not Inspected': <span className="text-gray-600">Not Inspected</span>,
+      'Inspected': <span className="text-gray-600">Inspected</span>,
+      'Due Soon': <span className="text-gray-600">Due Soon</span>,
+      'Overdue': <span className="text-gray-600">Overdue</span>
     }
-    return badges[type] || <span className="badge badge-gray">{type}</span>
+    return badges[status] || <span className="text-gray-600">{status}</span>
   }
 
   const columns = [
     {
-      key: 'title',
-      label: 'Task Title',
+      key: 'assetName',
+      label: 'Asset Name',
       sortable: true,
-      render: (value, item) => (
-        <div>
-          <div className="font-medium text-gray-900 dark:text-white">{value}</div>
-          <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-            {item.description}
-          </div>
-        </div>
+      render: (value) => (
+        <span className="text-blue-600 hover:text-blue-800 cursor-pointer font-medium">
+          {value}
+        </span>
       )
     },
     {
-      key: 'assetName',
-      label: 'Asset',
+      key: 'assetType',
+      label: 'Asset Type',
       sortable: true,
-      render: (value, item) => (
-        <div className="flex items-center space-x-2">
-          <Building className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-900 dark:text-white">{value}</span>
-        </div>
+      render: (value) => (
+        <span className="text-gray-600">{value}</span>
       )
+    },
+    {
+      key: 'assetStatus',
+      label: 'Asset Status',
+      sortable: true,
+      filterable: true,
+      filterOptions: ['Active', 'Under Maintenance', 'Decommissioned'],
+      render: (value) => getAssetStatusBadge(value)
+    },
+    {
+      key: 'assetCondition',
+      label: 'Asset Condition',
+      sortable: true,
+      filterable: true,
+      filterOptions: ['Good', 'Needs Repairs', 'Critical'],
+      render: (value) => getAssetConditionBadge(value)
     },
     {
       key: 'type',
-      label: 'Task Type',
+      label: 'Task type',
       sortable: true,
       filterable: true,
       filterOptions: ['Inspection', 'Maintenance', 'Safety Check', 'Cleaning', 'Planning', 'Repair'],
-      render: (value) => getTypeBadge(value)
+      render: (value) => getTaskTypeBadge(value)
     },
     {
       key: 'priority',
-      label: 'Priority',
+      label: 'Task Priority',
       sortable: true,
       filterable: true,
       filterOptions: ['High', 'Medium', 'Low'],
       render: (value) => getPriorityBadge(value)
     },
     {
-      key: 'status',
-      label: 'Status',
-      sortable: true,
-      filterable: true,
-      filterOptions: ['Not Inspected', 'Under Maintenance', 'Recently Inspected', 'Scheduled for Inspection', 'Overdue', 'Completed'],
-      render: (value) => getStatusBadge(value)
-    },
-    {
-      key: 'dueDate',
-      label: 'Due Date',
+      key: 'urgency',
+      label: 'Urgency',
       sortable: true,
       render: (value, item) => {
-        const dueDate = new Date(value)
+        const dueDate = new Date(item.dueDate)
         const today = new Date()
         const isOverdue = dueDate < today && item.status !== 'Completed'
         const isToday = dueDate.toDateString() === today.toDateString()
         
-        return (
-          <div className="space-y-1">
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <span className={`text-sm ${
-                isOverdue ? 'text-red-600 dark:text-red-400 font-medium' :
-                isToday ? 'text-blue-600 dark:text-blue-400 font-medium' :
-                'text-gray-900 dark:text-white'
-              }`}>
-                {dueDate.toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-gray-400" />
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {item.time || '09:00 AM'}
-              </span>
-            </div>
-            {isToday && (
-              <span className="inline-block text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 px-2 py-1 rounded">
-                Today
-              </span>
-            )}
-            {isOverdue && (
-              <span className="inline-block text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 px-2 py-1 rounded">
-                Overdue
-              </span>
-            )}
-          </div>
-        )
+        if (isOverdue) {
+          return <span className="text-gray-600">Overdue</span>
+        } else if (isToday) {
+          return <span className="text-gray-600">Due Today</span>
+        } else {
+          const diffTime = dueDate - today
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+          if (diffDays <= 7) {
+            return <span className="text-gray-600">Due in {diffDays} days</span>
+          }
+          return <span className="text-gray-600">Due in {diffDays} days</span>
+        }
       }
     },
     {
-      key: 'assignedTo',
-      label: 'Assigned To',
+      key: 'inspectionStatus',
+      label: 'Inspection Status',
       sortable: true,
       filterable: true,
-      filterOptions: ['Agent X', 'Agent Y', 'Agent Z', 'Cleaning Team'],
-      render: (value) => (
-        <div className="flex items-center space-x-2">
-          <User className="w-4 h-4 text-gray-400" />
-          <span className="text-sm text-gray-900 dark:text-white">{value}</span>
-        </div>
-      )
-    },
-    {
-      key: 'frequency',
-      label: 'Frequency',
-      sortable: true,
-      render: (value) => (
-        <span className="text-sm text-gray-600 dark:text-gray-400">{value}</span>
-      )
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (value, item) => (
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onView(item)
-            }}
-            className="p-1 text-gray-400 hover:text-secondary-600 transition-colors"
-            title="View details"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit(item)
-            }}
-            className="p-1 text-gray-400 hover:text-secondary-600 transition-colors"
-            title="Edit task"
-          >
-            <Edit className="w-4 h-4" />
-          </button>
-          {item.status !== 'Completed' && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onComplete(item)
-              }}
-              className="p-1 text-gray-400 hover:text-green-600 transition-colors"
-              title="Mark as complete"
-            >
-              <CheckCircle className="w-4 h-4" />
-            </button>
-          )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              onDelete(item)
-            }}
-            className="p-1 text-gray-400 hover:text-red-600 transition-colors"
-            title="Delete task"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-        </div>
-      )
+      filterOptions: ['Not Inspected', 'Inspected', 'Due Soon', 'Overdue'],
+      render: (value, item) => {
+        // Generate inspection status based on task data
+        const dueDate = new Date(item.dueDate)
+        const today = new Date()
+        const isOverdue = dueDate < today && item.status !== 'Completed'
+        
+        if (item.status === 'Completed') {
+          return getInspectionStatusBadge('Inspected')
+        } else if (isOverdue) {
+          return getInspectionStatusBadge('Overdue')
+        } else if (item.type === 'Inspection') {
+          return getInspectionStatusBadge('Due Soon')
+        } else {
+          return getInspectionStatusBadge('Not Inspected')
+        }
+      }
     }
   ]
 
   return (
-    <EnhancedDataTable
-      data={tasks}
-      columns={columns}
-      searchable={true}
-      filterable={true}
-      sortable={true}
-      pagination={true}
-      pageSize={10}
-      onRowClick={onView}
-      emptyMessage="No tasks found. Create your first task to get started."
-      title="Tasks Report"
-      type="tasks"
-      allowExport={true}
-      allowBulkOperations={true}
-      bulkActions={bulkActions}
-      onBulkAction={handleBulkAction}
-    />
+    <div className="bg-white rounded-lg shadow">
+      <EnhancedDataTable
+        data={enhancedTasks}
+        columns={columns}
+        sortable={true}
+        pagination={true}
+        pageSize={8}
+        onRowClick={onView}
+        emptyMessage="No tasks found. Create your first task to get started."
+        bulkActions={bulkActions}
+      />
+    </div>
   )
 }
 

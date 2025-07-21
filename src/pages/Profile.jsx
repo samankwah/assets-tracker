@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import usePageTitle from "../hooks/usePageTitle";
 import {
   User,
   Mail,
@@ -17,6 +18,8 @@ import {
 import toast from "react-hot-toast";
 
 const Profile = () => {
+  usePageTitle('Profile');
+  
   const { user, updateProfile } = useAuth();
   const { theme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);

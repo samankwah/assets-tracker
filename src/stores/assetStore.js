@@ -12,7 +12,7 @@ const mockAssets = [
     id: 1,
     name: 'Los Palmas',
     type: 'Apartment',
-    status: 'Active',
+    status: 'Scheduled for Inspection',
     condition: 'Good',
     currentPhase: PHASES.ACTIVE,
     phaseMetadata: {
@@ -94,7 +94,7 @@ const mockAssets = [
     id: 3,
     name: 'Calgary Street Condo',
     type: 'Apartment',
-    status: 'Decommissioned',
+    status: 'Overdue For Maintenance',
     condition: 'Critical',
     currentPhase: PHASES.DISPOSAL,
     phaseMetadata: {
@@ -130,6 +130,252 @@ const mockAssets = [
     nextInspection: '2025-07-20',
     createdAt: '2025-04-10',
     updatedAt: '2025-06-25'
+  },
+  {
+    id: 4,
+    name: 'Gregory Street, New Hampshire',
+    type: 'House',
+    status: 'Scheduled for Inspection',
+    condition: 'Needs Repairs',
+    currentPhase: PHASES.ACTIVE,
+    phaseMetadata: {
+      currentPhase: PHASES.ACTIVE,
+      phaseStartDate: '2025-05-01T00:00:00Z',
+      phaseProgress: 80,
+      requirements: ['Property ready for use', 'Regular maintenance scheduled'],
+      completedRequirements: ['Property ready for use'],
+      nextPhaseDate: null,
+      notes: 'Recently renovated property',
+      autoProgress: false
+    },
+    address: {
+      street: 'Gregory Street',
+      city: 'New Hampshire',
+      state: 'New Hampshire',
+      zipCode: '03102'
+    },
+    details: {
+      bedrooms: 4,
+      bathrooms: 3,
+      floors: 2,
+      balcony: true,
+      features: ['Spacious living area', 'Modern kitchen', 'Updated bathrooms']
+    },
+    images: ['/api/placeholder/400/300'],
+    inspectionStatus: 'Recently Inspected',
+    inspectionDate: '2025-07-15',
+    priority: 'Inspection Due Soon',
+    frequency: 'Monthly',
+    condition: 'Needs Repairs',
+    lastInspection: '2025-07-01',
+    nextInspection: '2025-08-01',
+    createdAt: '2025-06-01',
+    updatedAt: '2025-07-15'
+  },
+  {
+    id: 5,
+    name: 'Gregory Street, New Hampshire',
+    type: 'House',
+    status: 'Due For Maintenance',
+    condition: 'Needs Repairs',
+    currentPhase: PHASES.MAINTENANCE,
+    phaseMetadata: {
+      currentPhase: PHASES.MAINTENANCE,
+      phaseStartDate: '2025-06-01T00:00:00Z',
+      phaseProgress: 45,
+      requirements: ['Maintenance plan defined', 'Service providers contracted'],
+      completedRequirements: ['Maintenance plan defined'],
+      nextPhaseDate: '2025-09-01T00:00:00Z',
+      notes: 'Scheduled for major repairs',
+      autoProgress: false
+    },
+    address: {
+      street: 'Gregory Street',
+      city: 'New Hampshire',
+      state: 'New Hampshire',
+      zipCode: '03103'
+    },
+    details: {
+      bedrooms: 3,
+      bathrooms: 2,
+      floors: 2,
+      balcony: false,
+      features: ['Cozy living room', 'Updated kitchen', 'Hardwood floors']
+    },
+    images: ['/api/placeholder/400/300'],
+    inspectionStatus: 'Inspection Due',
+    inspectionDate: '2025-07-20',
+    priority: 'High Priority',
+    frequency: 'Quarterly',
+    condition: 'Needs Repairs',
+    lastInspection: '2025-06-20',
+    nextInspection: '2025-08-20',
+    createdAt: '2025-05-20',
+    updatedAt: '2025-07-10'
+  },
+  {
+    id: 6,
+    name: 'Gregory Street, New Hampshire',
+    type: 'House',
+    status: 'Overdue For Maintenance',
+    condition: 'Critical',
+    currentPhase: PHASES.MAINTENANCE,
+    phaseMetadata: {
+      currentPhase: PHASES.MAINTENANCE,
+      phaseStartDate: '2025-05-15T00:00:00Z',
+      phaseProgress: 20,
+      requirements: ['Emergency repairs needed', 'Contractor evaluation'],
+      completedRequirements: [],
+      nextPhaseDate: null,
+      notes: 'Critical maintenance required immediately',
+      autoProgress: false
+    },
+    address: {
+      street: 'Gregory Street',
+      city: 'New Hampshire',
+      state: 'New Hampshire',
+      zipCode: '03104'
+    },
+    details: {
+      bedrooms: 2,
+      bathrooms: 1,
+      floors: 1,
+      balcony: false,
+      features: ['Compact design', 'Needs renovation', 'Original fixtures']
+    },
+    images: ['/api/placeholder/400/300'],
+    inspectionStatus: 'Inspection Overdue',
+    inspectionDate: '2025-06-01',
+    priority: 'High Priority',
+    frequency: 'Quarterly',
+    condition: 'Critical',
+    lastInspection: '2025-05-01',
+    nextInspection: '2025-07-01',
+    createdAt: '2025-04-15',
+    updatedAt: '2025-06-15'
+  },
+  {
+    id: 7,
+    name: 'Gregory Street, New Hampshire',
+    type: 'House',
+    status: 'Under Maintenance',
+    condition: 'Needs Repairs',
+    currentPhase: PHASES.MAINTENANCE,
+    phaseMetadata: {
+      currentPhase: PHASES.MAINTENANCE,
+      phaseStartDate: '2025-06-10T00:00:00Z',
+      phaseProgress: 65,
+      requirements: ['Work in progress', 'Quality inspections'],
+      completedRequirements: ['Work in progress'],
+      nextPhaseDate: '2025-08-10T00:00:00Z',
+      notes: 'Renovation work underway',
+      autoProgress: false
+    },
+    address: {
+      street: 'Gregory Street',
+      city: 'New Hampshire',
+      state: 'New Hampshire',
+      zipCode: '03105'
+    },
+    details: {
+      bedrooms: 3,
+      bathrooms: 2,
+      floors: 1,
+      balcony: true,
+      features: ['Under renovation', 'Modern appliances', 'New flooring']
+    },
+    images: ['/api/placeholder/400/300'],
+    inspectionStatus: 'Recently Inspected',
+    inspectionDate: '2025-07-10',
+    priority: 'Inspection Due Soon',
+    frequency: 'Monthly',
+    condition: 'Needs Repairs',
+    lastInspection: '2025-07-05',
+    nextInspection: '2025-08-05',
+    createdAt: '2025-06-01',
+    updatedAt: '2025-07-15'
+  },
+  {
+    id: 8,
+    name: 'Gregory Street, New Hampshire',
+    type: 'House',
+    status: 'Scheduled for Inspection',
+    condition: 'Fair',
+    currentPhase: PHASES.ACTIVE,
+    phaseMetadata: {
+      currentPhase: PHASES.ACTIVE,
+      phaseStartDate: '2025-05-20T00:00:00Z',
+      phaseProgress: 90,
+      requirements: ['Property ready for use', 'Regular maintenance scheduled'],
+      completedRequirements: ['Property ready for use', 'Regular maintenance scheduled'],
+      nextPhaseDate: null,
+      notes: 'Well-maintained property',
+      autoProgress: false
+    },
+    address: {
+      street: 'Gregory Street',
+      city: 'New Hampshire',
+      state: 'New Hampshire',
+      zipCode: '03106'
+    },
+    details: {
+      bedrooms: 4,
+      bathrooms: 3,
+      floors: 2,
+      balcony: true,
+      features: ['Large living spaces', 'Modern appliances', 'Well-maintained']
+    },
+    images: ['/api/placeholder/400/300'],
+    inspectionStatus: 'Recently Inspected',
+    inspectionDate: '2025-07-18',
+    priority: 'Inspection Due Soon',
+    frequency: 'Monthly',
+    condition: 'Fair',
+    lastInspection: '2025-07-10',
+    nextInspection: '2025-08-10',
+    createdAt: '2025-05-15',
+    updatedAt: '2025-07-18'
+  },
+  {
+    id: 9,
+    name: 'Gregory Street, New Hampshire',
+    type: 'House',
+    status: 'Scheduled for Inspection',
+    condition: 'Fair',
+    currentPhase: PHASES.ACTIVE,
+    phaseMetadata: {
+      currentPhase: PHASES.ACTIVE,
+      phaseStartDate: '2025-06-01T00:00:00Z',
+      phaseProgress: 85,
+      requirements: ['Property ready for use', 'Regular maintenance scheduled'],
+      completedRequirements: ['Property ready for use'],
+      nextPhaseDate: null,
+      notes: 'Stable property condition',
+      autoProgress: false
+    },
+    address: {
+      street: 'Gregory Street',
+      city: 'New Hampshire',
+      state: 'New Hampshire',
+      zipCode: '03107'
+    },
+    details: {
+      bedrooms: 3,
+      bathrooms: 2,
+      floors: 1,
+      balcony: false,
+      features: ['Comfortable layout', 'Updated kitchen', 'Good condition']
+    },
+    images: ['/api/placeholder/400/300'],
+    inspectionStatus: 'Recently Inspected',
+    inspectionDate: '2025-07-12',
+    priority: 'Inspection Due Soon',
+    frequency: 'Monthly',
+    condition: 'Fair',
+    lastInspection: '2025-07-05',
+    nextInspection: '2025-08-05',
+    createdAt: '2025-05-25',
+    updatedAt: '2025-07-12'
   }
 ]
 
