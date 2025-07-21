@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, forwardRef } from 'react'
 import { Bell, X, Check, Clock, AlertCircle, Calendar, Trash2 } from 'lucide-react'
 
-const NotificationPanel = ({ isOpen, onClose, notifications, onMarkAsRead, onMarkAllAsRead, onDelete }) => {
+const NotificationPanel = forwardRef(({ isOpen, onClose, notifications, onMarkAsRead, onMarkAllAsRead, onDelete }, ref) => {
   const [filter, setFilter] = useState('all') // 'all', 'unread', 'read'
 
   const getNotificationIcon = (type) => {
@@ -57,7 +57,7 @@ const NotificationPanel = ({ isOpen, onClose, notifications, onMarkAsRead, onMar
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 pt-20">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-hidden notification-panel">
+      <div ref={ref} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[80vh] overflow-hidden notification-panel">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
@@ -181,6 +181,8 @@ const NotificationPanel = ({ isOpen, onClose, notifications, onMarkAsRead, onMar
       </div>
     </div>
   )
-}
+})
+
+NotificationPanel.displayName = 'NotificationPanel'
 
 export default NotificationPanel

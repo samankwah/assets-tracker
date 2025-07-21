@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useClickOutsideAndEscape } from "../../hooks/useClickOutside";
 import {
   Search,
   Filter,
@@ -48,6 +49,9 @@ const GlobalSearch = ({ isOpen, onClose }) => {
   const { addToHistory, addToRecent, saveSearch } = useSearchStore();
   const navigate = useNavigate();
   const searchInputRef = useRef(null);
+  
+  // Add click outside functionality
+  const searchContainerRef = useClickOutsideAndEscape(onClose, isOpen);
 
   useEffect(() => {
     if (isOpen && searchInputRef.current) {
@@ -259,7 +263,7 @@ const GlobalSearch = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center pt-20">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
+      <div ref={searchContainerRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between mb-4">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Download, FileText, Sheet } from 'lucide-react';
 import { exportUtils } from '../../utils/exportUtils';
+import { useClickOutside } from '../../hooks/useClickOutside';
 import toast from 'react-hot-toast';
 
 const ExportMenu = ({ 
@@ -12,6 +13,11 @@ const ExportMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+
+  // Add click outside functionality
+  const exportMenuRef = useClickOutside(() => {
+    setIsOpen(false);
+  }, isOpen);
 
   const handleExport = async (format) => {
     if (!data || data.length === 0) {
@@ -50,7 +56,7 @@ const ExportMenu = ({
   const exportCount = data.length;
 
   return (
-    <div className={`relative ${className}`}>
+    <div ref={exportMenuRef} className={`relative ${className}`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={isExporting || exportCount === 0}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useClickOutsideAndEscape } from '../../hooks/useClickOutside'
 import { X, Calendar, User, AlertCircle, CheckCircle, Clock, Building, Edit2, Trash2, MapPin } from 'lucide-react'
 import { useTaskStore } from '../../stores/taskStore'
 import { useAssetStore } from '../../stores/assetStore'
@@ -9,6 +10,9 @@ const TaskDetailModal = ({ isOpen, onClose, task, onEdit }) => {
   const { getAssetById } = useAssetStore()
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  // Add click outside functionality
+  const modalRef = useClickOutsideAndEscape(onClose, isOpen && task)
 
   if (!isOpen || !task) return null
 
@@ -98,7 +102,7 @@ const TaskDetailModal = ({ isOpen, onClose, task, onEdit }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

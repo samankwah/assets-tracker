@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import usePageTitle from "../../hooks/usePageTitle";
 import toast from "react-hot-toast";
+import pic11 from "../../assets/pic 11.avif";
 
 const ForgotPassword = () => {
   usePageTitle('Forgot Password');
@@ -49,76 +50,112 @@ const ForgotPassword = () => {
 
   if (emailSent) {
     return (
-      <div className="animate-fade-in">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Verify & Reset Password
-          </h2>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            A reset link has been sent to your email address
-          </p>
+      <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${pic11})`
+          }}
+        >
+          {/* Optional overlay for better text readability */}
+          <div className="absolute inset-0 bg-black bg-opacity-40"></div>
         </div>
 
-        <div className="space-y-6">
-          {/* <button
-            onClick={handleResend}
-            disabled={loading}
-            className="w-full btn-primary"
-          >
-            {loading ? <div className="spinner"></div> : 'Skip Now'}
-          </button> */}
+        {/* White card container */}
+        <div className="relative z-10 bg-white rounded-lg p-10 w-full max-w-lg mx-4 shadow-2xl animate-fade-in">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Verify & Reset Password
+            </h2>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              A reset link has been sent to your email address
+            </p>
+          </div>
 
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-            Didn't receive an email?{" "}
-            <button
-              onClick={handleResend}
-              className="text-secondary-600 hover:text-secondary-500"
+          <div className="space-y-6">
+            <p className="text-center text-sm text-gray-600">
+              Didn't receive an email?{" "}
+              <button
+                onClick={handleResend}
+                disabled={loading}
+                className="text-secondary-600 hover:text-secondary-700 font-medium"
+              >
+                {loading ? "Sending..." : "Resend"}
+              </button>
+            </p>
+            
+            <Link
+              to="/auth/login"
+              className="block text-center text-sm text-gray-500 hover:text-gray-700"
             >
-              Resend
-            </button>
-          </p>
+              Back to Login
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Forgot Password?
-        </h2>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          Kindly enter the email address associated with your account
-        </p>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${pic11})`
+        }}
+      >
+        {/* Optional overlay for better text readability */}
+        <div className="absolute inset-0 bg-black bg-opacity-40"></div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="ginny@gmail.com"
-            className="form-input"
-          />
+      {/* White card container */}
+      <div className="relative z-10 bg-white rounded-lg p-10 w-full max-w-lg mx-4 shadow-2xl animate-fade-in">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Forgot Password?
+          </h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            Kindly enter the email address associated with your account
+          </p>
         </div>
 
-        <button type="submit" disabled={loading} className="w-full btn-primary">
-          {loading ? <div className="spinner"></div> : "Submit"}
-        </button>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ginny@gmail.com"
+              className="form-input"
+            />
+          </div>
 
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-          Remember your password?{" "}
-          <Link
-            to="/auth/login"
-            className="text-secondary-600 hover:text-secondary-500"
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="w-full btn-primary"
           >
-            Back to Login
-          </Link>
-        </p>
-      </form>
+            {loading ? (
+              <div className="spinner"></div>
+            ) : (
+              "Submit"
+            )}
+          </button>
+
+          <p className="text-center text-sm text-gray-500">
+            Remember your password?{" "}
+            <Link
+              to="/auth/login"
+              className="text-secondary-600 hover:text-secondary-700 font-medium"
+            >
+              Back to Login
+            </Link>
+          </p>
+        </form>
+      </div>
     </div>
   );
 };

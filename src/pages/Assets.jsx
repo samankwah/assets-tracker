@@ -42,14 +42,6 @@ const Assets = () => {
 
   const filteredAssets = getFilteredAssets()
 
-  // Initialize assets on component mount
-  useEffect(() => {
-    if (assets.length === 0) {
-      fetchAssets().catch(err => {
-        console.error('Failed to fetch assets:', err)
-      })
-    }
-  }, [assets.length, fetchAssets])
 
   const handleFiltersChange = (newFilters) => {
     setFilters(newFilters)

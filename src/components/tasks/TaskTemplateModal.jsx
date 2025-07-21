@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useClickOutsideAndEscape } from '../../hooks/useClickOutside';
 import { X, Search, Clock, Users, CheckCircle, Copy, Filter } from 'lucide-react';
 import { taskTemplates, getTemplatesByType, searchTemplates } from '../../data/taskTemplates';
 import toast from 'react-hot-toast';
@@ -7,6 +8,9 @@ const TaskTemplateModal = ({ isOpen, onClose, onSelectTemplate }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  // Add click outside functionality
+  const modalRef = useClickOutsideAndEscape(onClose, isOpen);
 
   if (!isOpen) return null;
 
@@ -52,7 +56,7 @@ const TaskTemplateModal = ({ isOpen, onClose, onSelectTemplate }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-7xl h-full max-h-[90vh] flex overflow-hidden">
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-7xl h-full max-h-[90vh] flex overflow-hidden">
         {/* Left Panel - Template List */}
         <div className="w-1/2 border-r border-gray-200 dark:border-gray-700 flex flex-col">
           {/* Header */}

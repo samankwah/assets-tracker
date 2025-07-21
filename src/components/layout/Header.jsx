@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useClickOutside } from "../../hooks/useClickOutside";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useNotificationStore } from "../../stores/notificationStore";
@@ -32,33 +33,29 @@ const Header = ({ onMobileSidebarToggle }) => {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   
-  const dropdownRef = useRef(null);
   const unreadCount = getUnreadCount();
 
-  // Close dropdown when clicking outside or pressing Escape
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowProfileDropdown(false);
-      }
-    };
+  // Click outside handlers using custom hook
+  const profileDropdownRef = useClickOutside(() => {
+    setShowProfileDropdown(false);
+  }, showProfileDropdown);
 
+  const notificationDropdownRef = useClickOutside(() => {
+    setShowNotifications(false);
+  }, showNotifications);
+
+  // Handle escape key for dropdowns
+  useEffect(() => {
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        setShowProfileDropdown(false);
+        if (showProfileDropdown) setShowProfileDropdown(false);
+        if (showNotifications) setShowNotifications(false);
       }
     };
 
-    if (showProfileDropdown) {
-      document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [showProfileDropdown]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showProfileDropdown, showNotifications]);
 
   const handleProfileClick = () => {
     setShowProfileDropdown(false);
@@ -141,7 +138,7 @@ const Header = ({ onMobileSidebarToggle }) => {
           </button>
 
           {/* Profile Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative" ref={profileDropdownRef}>
             <button
               onClick={() => setShowProfileDropdown(!showProfileDropdown)}
               className={`flex items-center space-x-2 p-2 rounded-lg transition-all duration-200 ${
@@ -168,7 +165,7 @@ const Header = ({ onMobileSidebarToggle }) => {
             </button>
 
             {showProfileDropdown && (
-              <div className="dropdown" role="menu" aria-orientation="vertical">
+              <div ref={profileDropdownRef} className="dropdown" role="menu" aria-orientation="vertical">
                 {/* User Info Section */}
                 <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center space-x-3">
@@ -237,6 +234,7 @@ const Header = ({ onMobileSidebarToggle }) => {
 
       {/* Notification Panel */}
       <NotificationPanel
+        ref={notificationDropdownRef}
         isOpen={showNotifications}
         onClose={() => setShowNotifications(false)}
         notifications={notifications}

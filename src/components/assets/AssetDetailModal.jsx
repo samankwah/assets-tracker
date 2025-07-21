@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useClickOutsideAndEscape } from '../../hooks/useClickOutside'
 import { X, MapPin, Home, Calendar, Edit2, Trash2, Image as ImageIcon, ChevronLeft, ChevronRight, ArrowRight, TrendingUp } from 'lucide-react'
 import { useAssetStore } from '../../stores/assetStore'
 import { PhaseBadge, PhaseProgress, PhaseTimeline, PhaseTransitionModal } from '../phases'
@@ -11,6 +12,9 @@ const AssetDetailModal = ({ isOpen, onClose, asset, onEdit }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showPhaseTransition, setShowPhaseTransition] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
+
+  // Add click outside functionality
+  const modalRef = useClickOutsideAndEscape(onClose, isOpen && asset)
 
   if (!isOpen || !asset) return null
 
@@ -80,7 +84,7 @@ const AssetDetailModal = ({ isOpen, onClose, asset, onEdit }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-5xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between p-6">

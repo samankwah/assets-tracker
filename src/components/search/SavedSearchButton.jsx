@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Bookmark, ChevronDown } from 'lucide-react'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import SavedSearches from './SavedSearches'
 import savedSearchService from '../../services/savedSearchService'
 
@@ -12,6 +13,11 @@ const SavedSearchButton = ({
   const [showSavedSearches, setShowSavedSearches] = useState(false)
   const [quickAccessSearches, setQuickAccessSearches] = useState([])
   const [showDropdown, setShowDropdown] = useState(false)
+
+  // Add click outside functionality
+  const dropdownRef = useClickOutside(() => {
+    setShowDropdown(false)
+  }, showDropdown)
 
   const loadQuickAccessSearches = () => {
     const searches = savedSearchService.getQuickAccessSearches()
@@ -45,7 +51,7 @@ const SavedSearchButton = ({
   }
 
   return (
-    <div className="relative">
+    <div ref={dropdownRef} className="relative">
       <button
         onClick={handleButtonClick}
         className={`flex items-center space-x-2 px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors ${className}`}

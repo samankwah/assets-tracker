@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useClickOutsideAndEscape } from '../../hooks/useClickOutside'
 import { X, ArrowRight, AlertTriangle, CheckCircle, Calendar, FileText, Upload, User } from 'lucide-react'
 import { PhaseBadge, PhaseProgress } from '../phases'
 import { PHASES, PHASE_DESCRIPTIONS, createPhaseHistoryEntry } from '../../types/phaseTypes'
@@ -20,6 +21,9 @@ const PhaseTransitionModal = ({
   const [uploadedDocuments, setUploadedDocuments] = useState([])
   const [validationResult, setValidationResult] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Add click outside functionality
+  const modalRef = useClickOutsideAndEscape(onClose, isOpen)
 
   const { transitionAssetPhase } = usePhaseStore()
   const { updateAsset } = useAssetStore()
@@ -142,7 +146,7 @@ const PhaseTransitionModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+      <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">

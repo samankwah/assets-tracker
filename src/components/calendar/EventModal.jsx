@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useClickOutsideAndEscape } from '../../hooks/useClickOutside'
 import { 
   X, 
   Calendar, 
@@ -22,6 +23,9 @@ const EventModal = ({ isOpen, onClose, event, mode = 'view', onEdit, onDelete })
   const { updateTask, deleteTask } = useTaskStore()
   const { assets, getAssetById } = useAssetStore()
   const [loading, setLoading] = useState(false)
+
+  // Add click outside functionality
+  const modalRef = useClickOutsideAndEscape(onClose, isOpen)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -156,7 +160,7 @@ const EventModal = ({ isOpen, onClose, event, mode = 'view', onEdit, onDelete })
   if (mode === 'view' && event) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
@@ -325,7 +329,7 @@ const EventModal = ({ isOpen, onClose, event, mode = 'view', onEdit, onDelete })
   if (mode === 'edit' || mode === 'create') {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div ref={modalRef} className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

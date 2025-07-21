@@ -6,6 +6,8 @@ import AuthLayout from "./components/layout/AuthLayout";
 import MainLayout from "./components/layout/MainLayout";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import EmailStep from "./pages/auth/EmailStep";
+import PasswordStep from "./pages/auth/PasswordStep";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Assets from "./pages/Assets";
@@ -29,6 +31,8 @@ function App() {
               <Route path="/auth" element={<AuthLayout />}>
                 <Route path="login" element={<Login />} />
                 <Route path="register" element={<Register />} />
+                <Route path="register/email" element={<EmailStep />} />
+                <Route path="register/password" element={<PasswordStep />} />
                 <Route path="forgot-password" element={<ForgotPassword />} />
               </Route>
 

@@ -104,6 +104,25 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const validateEmail = async (email) => {
+    try {
+      // Simulate API call to check if email is available
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      // Simulate some emails being taken (for demo purposes)
+      const takenEmails = ['admin@test.com', 'user@test.com', 'demo@example.com']
+      const isAvailable = !takenEmails.includes(email.toLowerCase())
+      
+      return { 
+        success: true, 
+        available: isAvailable,
+        message: isAvailable ? 'Email is available' : 'Email is already registered'
+      }
+    } catch (error) {
+      return { success: false, error: error.message }
+    }
+  }
+
   const updateProfile = async (profileData) => {
     try {
       // Simulate API call
@@ -125,6 +144,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     forgotPassword,
     resetPassword,
+    validateEmail,
     updateProfile,
     loading,
     isAuthenticated: !!user
